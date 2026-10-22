@@ -1,0 +1,292 @@
+(function (root, factory) {
+  const exported=factory();
+  if(typeof module==='object'&&module.exports)module.exports=exported;
+  root.PTCGEngine=exported;
+})(typeof window!=='undefined'?window:globalThis,function(){
+  const DECKS={
+    rocket:{
+      'me2pt5-126':4,'me2pt5-127':4,'sv10-153':3,'sv10-154':2,'sv10-155':3,
+      'sv10-87':1,'sv10-178':4,'sv10-177':4,'sv10-176':3,'sv10-171':4,
+      'sv10-174':2,'sv10-170':2,'sv10-173':2,'me1-125':3,'me1-131':3,
+      'me2pt5-196':2,'zsv10pt5-79':2,'sv10-182':4,'sve-7':8
+    },
+    dragapult:{
+      'me2pt5-158':4,'me2pt5-159':4,'me2pt5-160':3,'sv6pt5-38':1,'me3-62':1,
+      'me2-18':1,'me1-119':4,'me1-114':2,'me3-76':2,'me1-125':4,
+      'me1-131':4,'me2pt5-198':4,'me2pt5-196':2,'me1-130':3,'zsv10pt5-79':2,
+      'me2-85':2,'sv8-185':1,'me4-108':2,'sve-2':7,'sve-5':7
+    },
+    lucario:{
+      'me2pt5-113':3,'me2pt5-112':3,'me2pt5-105':2,'me2pt5-106':2,'me1-73':2,'me1-72':2,
+      'me1-119':4,'me1-114':2,'sv9-146':2,'me3-76':2,'sv9-143':1,'sv8-177':1,
+      'me1-116':4,'me2pt5-198':4,'me1-124':4,'me1-131':4,'me2pt5-196':2,
+      'zsv10pt5-79':1,'sv6-163':1,'me1-130':1,'sve-6':10,'me3-87':3
+    },
+    charizard:{
+      'me2-13':3,'me2pt5-22':1,'me2-12':2,'me2-11':4,'me2-18':2,'me2-17':1,
+      'sv6pt5-38':1,'me3-62':1,'me1-119':4,'me1-114':2,'me2-89':2,
+      'sv10-176':2,'me2-87':1,'me3-76':1,'sv6-155':1,'me2-85':2,
+      'me1-125':4,'me1-131':4,'me4-108':2,'me2pt5-196':2,'me2pt5-198':2,
+      'me3-108':1,'me1-121':1,'sv8-185':1,'zsv10pt5-79':2,'sve-2':11
+    }
+  };
+  const ALLOWED=new Set(['H','I','J']);
+  let serial=0;
+  const shuffle=(array,random)=>{for(let i=array.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;};
+  const typeOf=c=>c.supertype==='Pokémon'?'pokemon':c.supertype==='Energy'?'energy':c.subtypes?.includes('Pokémon Tool')?'tool':c.subtypes?.includes('Supporter')?'supporter':c.subtypes?.includes('Stadium')?'stadium':'item';
+  const basicEnergy=c=>c.supertype==='Energy'&&c.subtypes?.includes('Basic');
+  const ruleBox=c=>c.rules?.some(x=>/Pokémon ex rule|Mega Evolution ex Rule/i.test(x));
+  class Game{
+    constructor(data,random=Math.random,roles=['charizard','lucario']){this.cards=Object.fromEntries(data.map(c=>[c.id,c]));this.random=random;this.roles=roles;this.validateDeck();this.newGame();}
+    validateDeck(){for(const [name,deck] of Object.entries(DECKS)){let count=0,ace=0;for(const [id,qty] of Object.entries(deck)){const c=this.cards[id];if(!c)throw Error('Kartu tidak ditemukan: '+id);if(c.supertype!=='Energy'&&!ALLOWED.has(c.regulationMark))throw Error('Kartu di luar rotasi: '+id);if(c.supertype!=='Energy'&&qty>4)throw Error('Lebih dari 4 kopi: '+id);if(c.subtypes?.includes('ACE SPEC'))ace+=qty;count+=qty;}if(count!==60||ace>1)throw Error('Dek '+name+' tidak sah: '+count+' kartu, '+ace+' ACE SPEC');}}
+    createDeck(name){const cards=[];for(const [id,qty] of Object.entries(DECKS[name]))for(let i=0;i<qty;i++)cards.push({uid:++serial,id});return shuffle(cards,this.random);}
+    makePlayer(name,deckName){return{name,deckName,deck:this.createDeck(deckName),hand:[],prize:[],discard:[],active:null,bench:[],turns:0,energyUsed:false,supporterUsed:false,stadiumUsed:false,retreated:false,mulligans:0,bonus:0,blackBelt:false,koLastTurn:false,koThisTurn:false,abilityFlags:{},history:[]};}
+    print(message){this.log.unshift(message);this.log=this.log.slice(0,100);}
+    recordAction(p,type,title,detail='',extra={}){
+      if(!p)return null;
+      if(!p.history)p.history=[];
+      const entry={turn:p.turns,type,title,detail,cardId:extra.cardId||null,cardName:extra.cardName||title,time:Date.now(),...extra};
+      p.history.unshift(entry);
+      return entry;
+    }
+    draw(p,n=1){let count=0;while(count<n&&p.deck.length){p.hand.push(p.deck.pop());count++;}return count;}
+    unit(card,turn){return{stack:[card],energy:[],tool:null,damage:0,placedTurn:turn,evolvedTurn:-1,poisoned:false,paralyzed:false,attackLocks:{},abilityUsedTurn:-1};}
+    newGame(){const label=deck=>deck==='rocket'?"Team Rocket's Honchkrow · Porygon-Z":deck==='dragapult'?'Dragapult ex':deck==='lucario'?'Mega Lucario':'Mega Charizard X';this.players=[this.makePlayer('Kamu · '+label(this.roles[0]),this.roles[0]),this.makePlayer('CPU · '+label(this.roles[1]),this.roles[1])];this.turn=0;this.over=false;this.winner=null;this.pendingPromotion=null;this.stadium=null;this.log=[];for(const p of this.players){do{p.deck.push(...p.hand);p.hand=[];shuffle(p.deck,this.random);this.draw(p,7);if(!p.hand.some(c=>this.isBasic(c)))p.mulligans++;}while(!p.hand.some(c=>this.isBasic(c)));p.prize=p.deck.splice(-6);const preferred=p.deckName==='rocket'?'me2pt5-126':p.deckName==='dragapult'?'me2pt5-158':p.deckName==='lucario'?'me2pt5-112':'me2-11';const first=p.hand.find(c=>c.id===preferred)||p.hand.find(c=>this.isBasic(c));p.hand.splice(p.hand.indexOf(first),1);p.active=this.unit(first,0);this.recordAction(p,'card',this.name(first),'Active awal',{cardId:first.id,subtype:'Basic'});}if(this.bot.mulligans>this.me.mulligans)this.draw(this.me,this.bot.mulligans-this.me.mulligans);if(this.me.mulligans>this.bot.mulligans)this.draw(this.bot,this.me.mulligans-this.bot.mulligans);this.me.turns=1;this.draw(this.me);this.print(label(this.roles[0])+' melawan '+label(this.roles[1])+'. Kamu bermain pertama.');}
+    get me(){return this.players[0];}get bot(){return this.players[1];}get current(){return this.players[this.turn];}
+    card(instance){return this.cards[instance.id];}top(unit){return this.card(unit.stack.at(-1));}name(instance){return this.card(instance).name;}
+    isBasic(instance){return typeOf(this.card(instance))==='pokemon'&&this.card(instance).subtypes?.includes('Basic');}
+    unitAt(p,ref){return ref==='active'?p.active:p.bench[ref];}allRefs(p){return[{ref:'active',unit:p.active},...p.bench.map((unit,ref)=>({ref,unit}))].filter(x=>x.unit);}
+    handCard(p,uid){return p.hand.find(c=>c.uid===uid);}takeHand(p,uid){const i=p.hand.findIndex(c=>c.uid===uid);return i<0?null:p.hand.splice(i,1)[0];}
+    fail(error){return{ok:false,error};}ok(){return{ok:true};}canAct(){return!this.over&&this.turn===0&&this.pendingPromotion===null;}
+    hp(unit){return Number(this.top(unit).hp)-(this.stadium?.id==='sv8-177'&&this.top(unit).subtypes?.includes('Stage 2')?30:0);}
+    remaining(unit){return Math.max(0,this.hp(unit)-unit.damage);}
+    retreatCost(unit){let n=this.top(unit).convertedRetreatCost||0;if(unit.tool?.id==='zsv10pt5-79')n=Math.max(0,n-2);if(this.top(unit).name==='Charmander'&&!unit.energy.length)n=0;return n;}
+    energyType(instance){if(instance.id==='sv10-182')return 'Rocket';if(instance.id==='me3-87'||instance.id==='sve-6')return 'Fighting';if(instance.id==='sve-2')return 'Fire';if(instance.id==='sve-5')return 'Psychic';if(instance.id==='sve-7')return 'Darkness';return this.name(instance).replace(/^Basic /,'').replace(/ Energy$/,'');}
+    hasCost(unit,cost){let units=[];for(const e of unit.energy){if(e.id==='sv10-182')units.push('Darkness/Psychic','Darkness/Psychic');else units.push(this.energyType(e));}if(units.length<cost.length)return false;const remaining=[...units];for(const type of cost.filter(x=>x!=='Colorless')){const exactIdx=remaining.indexOf(type);if(exactIdx>=0)remaining.splice(exactIdx,1);else{const wildIdx=remaining.findIndex(u=>u.includes(type));if(wildIdx>=0)remaining.splice(wildIdx,1);else return false;}}return remaining.length>=cost.filter(x=>x==='Colorless').length;}
+    validMoves(p=this.current){const u=p.active;if(!u||u.paralyzed)return[];return(this.top(u).attacks||[]).map((attack,index)=>({attack,index})).filter(({attack})=>this.hasCost(u,attack.cost||[])&&!(u.attackLocks[attack.name]>=p.turns)&&!(attack.name==='Cosmic Beam'&&!p.bench.some(b=>this.top(b).name==='Lunatone')));}
+    canAttack(p=this.current){return!this.over&&this.pendingPromotion===null&&!!p.active&&!(p===this.me&&p.turns===1)&&this.validMoves(p).length>0;}
+    canEvolve(p,card,u){if(!card.evolvesFrom||!u||p.turns===1||u.placedTurn>=p.turns||u.evolvedTurn===p.turns)return false;return card.evolvesFrom===this.top(u).name;}
+    isTeamRocketSupporter(c){const printed=this.card(c);return printed.supertype==='Trainer'&&printed.subtypes?.includes('Supporter')&&printed.name.includes("Team Rocket's");}
+    playBasic(uid,options={}){if(!this.canAct())return this.fail('Bukan giliranmu.');const p=this.me,c=this.handCard(p,uid);if(!c||!this.isBasic(c))return this.fail('Pilih Pokémon Basic.');if(p.bench.length>=5)return this.fail('Bench penuh.');p.bench.push(this.unit(this.takeHand(p,uid),p.turns));this.print(this.name(c)+' masuk Bench.');this.recordAction(p,'card',this.name(c),'Masuk ke Bench',{cardId:c.id,subtype:'Basic'});if(c.id==='me3-62'&&!options.skipAbility)this.lastDitchCatch(p,options.supporterUid);return this.ok();}
+    lastDitchCatch(p,supporterUid){if(p.abilityFlags.lastDitch===p.turns||p.abilityFlags['global_ability_Last-Ditch Catch']===p.turns)return false;const choices=p.deck.filter(x=>typeOf(this.card(x))==='supporter');const c=choices.find(x=>x.uid===supporterUid)||choices[0];if(!c)return false;p.deck.splice(p.deck.indexOf(c),1);p.hand.push(c);shuffle(p.deck,this.random);p.abilityFlags.lastDitch=p.turns;p.abilityFlags['global_ability_Last-Ditch Catch']=p.turns;this.print('Last-Ditch Catch: Meowth ex memperlihatkan '+this.name(c)+' dan memasukkannya ke tangan.');this.recordAction(p,'skill','Last-Ditch Catch (Meowth ex)','Mengambil '+this.name(c)+' dari dek',{abilityName:'Last-Ditch Catch',cardId:'me3-62'});return true;}
+    evolve(uid,ref,opponentBenchIndex=null){if(!this.canAct())return this.fail('Bukan giliranmu.');const p=this.me,c=this.handCard(p,uid),u=this.unitAt(p,ref);if(!c||!this.canEvolve(p,this.card(c),u))return this.fail('Evolusi belum tersedia atau target tidak cocok.');const prevName=this.top(u).name;u.stack.push(this.takeHand(p,uid));u.evolvedTurn=p.turns;u.poisoned=false;u.paralyzed=false;u.attackLocks={};u.abilityUsedTurn=-1;this.print('Evolusi menjadi '+this.top(u).name+'.');this.recordAction(p,'card',this.card(c).name,'Evolusi dari '+prevName+' ('+(ref==='active'?'Active':'Bench')+')',{cardId:c.id,subtype:'Evolution'});if(this.top(u).name==='Hariyama'&&this.bot.bench.length&&opponentBenchIndex!==null){this.gust(this.bot,opponentBenchIndex);this.recordAction(p,'skill','Heave-Ho Catcher (Hariyama)','Menarik Pokémon lawan ke Active',{abilityName:'Heave-Ho Catcher',cardId:'me1-73'});}this.checkAllKO();return this.ok();}
+    attachEnergy(uid,ref){if(!this.canAct())return this.fail('Bukan giliranmu.');const p=this.me,c=this.handCard(p,uid),u=this.unitAt(p,ref);if(!c||typeOf(this.card(c))!=='energy'||!u)return this.fail('Pilih Energy dan Pokémon target.');if(p.energyUsed)return this.fail('Energy sudah dipasang giliran ini.');u.energy.push(this.takeHand(p,uid));p.energyUsed=true;this.print(this.name(c)+' dipasang ke '+this.top(u).name+'.');this.recordAction(p,'card',this.name(c),'Dipasang ke '+this.top(u).name,{cardId:c.id,subtype:'Energy'});return this.ok();}
+    attachTool(uid,ref){if(!this.canAct())return this.fail('Bukan giliranmu.');const p=this.me,c=this.handCard(p,uid),u=this.unitAt(p,ref);if(!c||typeOf(this.card(c))!=='tool'||!u||u.tool)return this.fail('Tool atau target tidak tersedia.');u.tool=this.takeHand(p,uid);this.print(this.name(c)+' dipasang ke '+this.top(u).name+'.');this.recordAction(p,'card',this.name(c),'Dipasang ke '+this.top(u).name,{cardId:c.id,subtype:'Tool'});return this.ok();}
+    ability(unit){return this.top(unit).abilities?.[0]||null;}
+    abilityUsageType(name){
+      if(name==='Excited Turbo')return 'multi';
+      if(name==='Flip the Script'||name==='Lunar Cycle'||name==='Last-Ditch Catch')return 'global_once';
+      return 'per_instance_once';
+    }
+    canAbility(p,ref){
+      const u=this.unitAt(p,ref),a=u&&this.ability(u);
+      if(!a)return false;
+      const name=a.name,usage=this.abilityUsageType(name);
+      if(usage==='per_instance_once'&&u.abilityUsedTurn===p.turns)return false;
+      if(usage==='global_once'&&p.abilityFlags['global_ability_'+name]===p.turns)return false;
+      if(name==='Recon Directive')return p.deck.length>0;
+      if(name==='Reconstitute')return p.hand.length>=2&&p.deck.length>0;
+      if(name==='Lunar Cycle')return this.allRefs(p).some(x=>this.top(x.unit).name==='Solrock')&&p.hand.some(c=>c.id==='sve-6')&&p.deck.length>0;
+      if(name==='Excited Turbo')return this.allRefs(p).some(x=>this.top(x.unit).subtypes?.includes('MEGA')&&this.top(x.unit).types?.includes('Fire'))&&p.hand.some(c=>c.id==='sve-2')&&p.bench.some(x=>this.top(x).types?.includes('Fire'));
+      if(name==='Flip the Script')return p.koLastTurn&&p.deck.length>0;
+      return false;
+    }
+    useAbility(ref,options={},targetPlayer=null){
+      const p=targetPlayer||(this.canAct()?this.me:(this.turn===1?this.bot:null));
+      if(!p)return this.fail('Bukan giliranmu.');
+      if(!targetPlayer&&p===this.me&&!this.canAct())return this.fail('Bukan giliranmu.');
+      const u=this.unitAt(p,ref);
+      if(!u||!this.canAbility(p,ref))return this.fail('Ability belum tersedia.');
+      const name=this.ability(u).name,usage=this.abilityUsageType(name);
+      if(usage==='per_instance_once')u.abilityUsedTurn=p.turns;
+      if(usage==='global_once')p.abilityFlags['global_ability_'+name]=p.turns;
+      if(name==='Recon Directive'){
+        this.draw(p,1);p.abilityFlags['recon_'+ref]=p.turns;
+        this.print('Recon Directive: '+this.top(u).name+' mengambil 1 kartu dari dek.');
+        this.recordAction(p,'skill','Recon Directive ('+this.top(u).name+')','Mengambil 1 kartu dari atas dek',{abilityName:'Recon Directive',cardId:u.stack.at(-1)?.id});
+      }else if(name==='Reconstitute'){
+        const toDiscard=(options.discardUids||[]).slice(0,2).map(uid=>p.hand.find(c=>c.uid===uid)).filter(Boolean);
+        while(toDiscard.length<2&&p.hand.length){const next=p.hand.find(c=>!toDiscard.includes(c));if(!next)break;toDiscard.push(next);}
+        for(const c of toDiscard)p.discard.push(this.takeHand(p,c.uid));
+        this.draw(p,1);p.abilityFlags.reconstitute=p.turns;
+        this.print('Reconstitute: membuang 2 kartu dan mengambil 1 kartu.');
+        this.recordAction(p,'skill','Reconstitute ('+this.top(u).name+')','Membuang 2 kartu dan mengambil 1 kartu',{abilityName:'Reconstitute',cardId:u.stack.at(-1)?.id});
+      }else if(name==='Lunar Cycle'){
+        const c=p.hand.find(x=>x.id==='sve-6');
+        p.discard.push(this.takeHand(p,options.energyUid||c.uid));
+        this.draw(p,3);p.abilityFlags.lunar=p.turns;
+        this.print('Lunar Cycle: buang Fighting Energy, ambil 3 kartu.');
+        this.recordAction(p,'skill','Lunar Cycle (Solrock/Lunatone)','Membuang Fighting Energy, mengambil 3 kartu',{abilityName:'Lunar Cycle',cardId:'me2pt5-106'});
+      }else if(name==='Excited Turbo'){
+        const c=this.handCard(p,options.energyUid)||p.hand.find(x=>x.id==='sve-2');
+        const target=p.bench[options.targetRef]||p.bench.find(x=>this.top(x).types?.includes('Fire'));
+        if(!c||c.id!=='sve-2'||!target||!this.top(target).types?.includes('Fire'))return this.fail('Pilih Fire Energy dan Pokémon Fire di Bench.');
+        target.energy.push(this.takeHand(p,c.uid));
+        this.print('Excited Turbo: Fire Energy dipasang ke Bench.');
+        this.recordAction(p,'skill','Excited Turbo (Oricorio ex)','Memasang Fire Energy ke '+this.top(target).name,{abilityName:'Excited Turbo',cardId:'me2-18'});
+      }else if(name==='Flip the Script'){
+        this.draw(p,3);p.abilityFlags.flip=p.turns;
+        this.print('Flip the Script: ambil 3 kartu.');
+        this.recordAction(p,'skill','Flip the Script (Fezandipiti ex)','Mengambil 3 kartu',{abilityName:'Flip the Script',cardId:'sv6pt5-38'});
+      }
+      return this.ok();
+    }
+    canRetreat(p=this.me){const u=p.active;return!!u&&!p.retreated&&!u.paralyzed&&p.bench.length>0&&u.energy.length>=this.retreatCost(u);}
+    retreat(index){if(!this.canAct()||!this.canRetreat(this.me))return this.fail('Belum dapat mundur.');const p=this.me;if(!p.bench[index])return this.fail('Pilih pengganti Bench.');const old=p.active;for(let i=0;i<this.retreatCost(old);i++)p.discard.push(old.energy.pop());old.poisoned=false;old.paralyzed=false;p.active=p.bench.splice(index,1)[0];p.bench.push(old);p.retreated=true;this.print('Kamu mundur ke '+this.top(p.active).name+'.');return this.ok();}
+    gust(p,index){if(!p.bench[index])return false;const old=p.active;p.active=p.bench.splice(index,1)[0];p.bench.push(old);this.print(p.name+' mengganti Active ke '+this.top(p.active).name+'.');return true;}
+    search(p,predicate,n=1,chosen=[]){const selected=[];for(const uid of chosen){const c=p.deck.find(x=>x.uid===uid&&predicate(x));if(c&&!selected.includes(c)&&selected.length<n)selected.push(c);}if(!chosen.length)selected.push(...p.deck.filter(predicate).slice(0,n));for(const c of selected){p.deck.splice(p.deck.indexOf(c),1);p.hand.push(c);}shuffle(p.deck,this.random);if(selected.length)this.print(p.name+' mengambil '+selected.map(c=>this.name(c)).join(', ')+' dari dek.');return selected.length;}
+    recover(p,predicate,n=1,chosen=[]){const selected=[];for(const uid of chosen){const c=p.discard.find(x=>x.uid===uid&&predicate(x));if(c&&!selected.includes(c)&&selected.length<n)selected.push(c);}if(!chosen.length)selected.push(...p.discard.filter(predicate).slice(0,n));for(const c of selected){p.discard.splice(p.discard.indexOf(c),1);p.hand.push(c);}if(selected.length)this.print(p.name+' mengambil '+selected.map(c=>this.name(c)).join(', ')+' dari discard.');return selected.length;}
+    basicFighting(c){return c.id==='sve-6';}basicFire(c){return c.id==='sve-2';}
+    playTrainer(uid,options={}){if(!this.canAct())return this.fail('Bukan giliranmu.');const p=this.me,c=this.handCard(p,uid);if(!c)return this.fail('Kartu tidak di tangan.');const printed=this.card(c),type=typeOf(printed),id=c.id;if(!['supporter','item','stadium'].includes(type))return this.fail('Bukan kartu Trainer.');if(type==='supporter'&&(p.supporterUsed||(p.turns===1&&id!=='sv10-177')))return this.fail('Supporter belum dapat dimainkan.');if(id==='sv10-170'&&!p.koLastTurn)return this.fail("Archer hanya bisa dimainkan jika Pokémon Team Rocket KO pada giliran lawan sebelumnya.");if(type==='stadium'&&(p.stadiumUsed||this.stadium?.id===id))return this.fail('Stadium belum dapat dimainkan.');const otherCards=p.hand.filter(x=>x.uid!==uid).length;if(id==='me1-131'&&otherCards<2)return this.fail('Ultra Ball perlu 2 kartu lain untuk dibuang.');if(id==='sv6-163'&&otherCards<3)return this.fail('Secret Box perlu 3 kartu lain untuk dibuang.');if(id==='me1-130'&&!p.bench.length)return this.fail('Bench kosong.');if(id==='me1-114'&&!this.bot.bench.length)return this.fail('Bench lawan kosong.');if(id==='me1-125'&&!this.rareCandyOptions(p).length)return this.fail('Rare Candy tidak memiliki pasangan evolusi.');
+      const played=this.takeHand(p,uid);if(type==='supporter')p.supporterUsed=true;if(type==='stadium'){p.stadiumUsed=true;const old=this.stadium;if(old)old.owner.discard.push(old.card);this.stadium={id,card:played,owner:p};this.print(old?printed.name+' menggantikan '+this.card(old.card).name+'.':printed.name+' masuk arena bersama.');this.recordAction(p,'card',printed.name,'Dimainkan di arena bersama (Stadium)',{cardId:c.id,subtype:'Stadium'});this.checkAllKO();return this.ok();}p.discard.push(played);
+      const fromDeck=(predicate,n=1)=>this.search(p,predicate,n,options.chosen||[]);
+      const fromDiscard=(predicate,n=1)=>this.recover(p,predicate,n,options.chosen||[]);
+      const dump=n=>{const chosen=(options.discard||[]).map(x=>this.handCard(p,x)).filter(Boolean).slice(0,n);while(chosen.length<n){const next=p.hand.find(x=>!chosen.includes(x));if(!next)break;chosen.push(next);}for(const x of chosen)p.discard.push(this.takeHand(p,x.uid));};
+      if(id==='me1-116')fromDeck(x=>this.basicFighting(x)||(this.isBasic(x)&&this.card(x).types?.includes('Fighting')));
+      else if(id==='me2pt5-198')fromDeck(x=>typeOf(this.card(x))==='pokemon'&&!ruleBox(this.card(x)));
+      else if(id==='me1-121')fromDeck(x=>this.card(x).subtypes?.includes('MEGA'));
+      else if(id==='me1-131'){dump(2);fromDeck(x=>typeOf(this.card(x))==='pokemon');}
+      else if(id==='sv6-163'){dump(3);for(const t of ['item','tool','supporter','stadium'])this.search(p,x=>typeOf(this.card(x))===t,1,options[t]?[options[t]]:[]);}
+      else if(id==='me2pt5-196')fromDiscard(x=>typeOf(this.card(x))==='pokemon'||basicEnergy(this.card(x)));
+      else if(id==='me4-108')fromDiscard(x=>basicEnergy(this.card(x)),2);
+      else if(id==='me3-108'){const selected=p.discard.filter(x=>basicEnergy(this.card(x))).slice(0,5);for(const x of selected){p.discard.splice(p.discard.indexOf(x),1);p.deck.push(x);}shuffle(p.deck,this.random);}
+      else if(id==='me1-130')this.gust(p,options.benchIndex??0);
+      else if(id==='me1-114')this.gust(this.bot,options.benchIndex??0);
+      else if(id==='me1-125'){const pair=this.rareCandyOptions(p).find(x=>x.ref===options.ref&&x.card.uid===options.evolutionUid)||this.rareCandyOptions(p)[0];const u=this.unitAt(p,pair.ref);u.stack.push(this.takeHand(p,pair.card.uid));u.evolvedTurn=p.turns;u.poisoned=false;u.paralyzed=false;u.abilityUsedTurn=-1;this.recordAction(p,'card',this.card(pair.card).name,'Evolusi via Rare Candy',{cardId:pair.card.id,subtype:'Evolution'});}
+      else if(id==='me1-119'){p.deck.push(...p.hand.splice(0));shuffle(p.deck,this.random);this.draw(p,p.prize.length===6?8:6);}
+      else if(id==='me3-76'){for(const player of this.players){player.deck.push(...player.hand.splice(0));shuffle(player.deck,this.random);this.draw(player,4);}}
+      else if(id==='sv9-146'){const evolution=options.mode==='evolution';fromDeck(x=>typeOf(this.card(x))==='pokemon'&&(evolution?!this.isBasic(x):this.isBasic(x)),evolution?1:2);}
+      else if(id==='sv9-143')p.blackBelt=true;
+      else if(id==='me1-124')p.bonus+=30;
+      else if(id==='me2-89')fromDeck(x=>this.basicFire(x),7);
+      else if(id==='sv10-176')fromDeck(x=>this.card(x).supertype==='Trainer');
+      else if(id==='me2-87')for(const subtype of ['Basic','Stage 1','Stage 2'])this.search(p,x=>this.card(x).subtypes?.includes(subtype),1);
+      else if(id==='sv6-155')fromDiscard(x=>(typeOf(this.card(x))==='pokemon'&&!ruleBox(this.card(x)))||basicEnergy(this.card(x)),3);
+      else if(id==='sv8-185'){const selected=p.deck.filter(x=>this.isBasic(x)).slice(0,5-p.bench.length);for(const x of selected){p.deck.splice(p.deck.indexOf(x),1);p.bench.push(this.unit(x,p.turns));}shuffle(p.deck,this.random);}
+      else if(id==='sv10-178')fromDeck(x=>this.isTeamRocketSupporter(x),1);
+      else if(id==='sv10-177')fromDeck(x=>this.isBasic(x)&&this.name(x).includes("Team Rocket's"),3);
+      else if(id==='sv10-171'){const allTR=this.allRefs(p).every(x=>this.top(x.unit).name.includes("Team Rocket's"));const targetCount=allTR?8:5;const diff=Math.max(0,targetCount-p.hand.length);if(diff>0)this.draw(p,diff);}
+      else if(id==='sv10-174'){if(p.bench.length)this.gust(p,options.benchIndex??0);if(this.bot.bench.length)this.gust(this.bot,options.opponentBenchIndex??0);}
+      else if(id==='sv10-170'){for(const player of this.players){player.deck.push(...player.hand.splice(0));shuffle(player.deck,this.random);this.draw(player,player===p?5:3);}}
+      if(this.isTeamRocketSupporter(c))p.abilityFlags['played_tr_supporter_'+p.turns]=true;
+      this.print(p.name+' memainkan '+printed.name+'.');this.recordAction(p,'card',printed.name,'Dimainkan ('+type+')',{cardId:c.id,subtype:type});return this.ok();}
+    canUseStadium(p=this.current){
+      if(this.over||this.turn!==(p===this.me?0:1)||this.pendingPromotion!==null)return false;
+      if(!this.stadium)return false;
+      if(this.stadium.id==='sv10-173'){
+        return !!p.abilityFlags['played_tr_supporter_'+p.turns]&&!p.abilityFlags['factory_'+p.turns]&&p.deck.length>0;
+      }
+      return false;
+    }
+    useStadium(p=this.me){
+      if(!this.canAct())return this.fail('Bukan giliranmu.');
+      if(!this.stadium)return this.fail('Tidak ada Stadium di arena.');
+      if(this.stadium.id==='sv10-173'){
+        if(!p.abilityFlags['played_tr_supporter_'+p.turns])return this.fail("Team Rocket's Factory hanya bisa dipakai setelah memainkan Supporter Team Rocket giliran ini.");
+        if(p.abilityFlags['factory_'+p.turns])return this.fail("Efek Team Rocket's Factory sudah digunakan giliran ini.");
+        if(p.deck.length===0)return this.fail('Dek kosong.');
+        p.abilityFlags['factory_'+p.turns]=true;
+        const drawn=this.draw(p,2);
+        this.print(p.name+" menggunakan efek Team Rocket's Factory: mengambil "+drawn+" kartu.");
+        this.recordAction(p,'skill',"Team Rocket's Factory","Mengambil "+drawn+" kartu dari dek",{cardId:'sv10-173'});
+        return this.ok();
+      }
+      return this.fail('Stadium ini tidak memiliki efek yang dapat diaktifkan.');
+    }
+    rareCandyOptions(p=this.me){if(p.turns===1)return[];const result=[];for(const {ref,unit} of this.allRefs(p)){if(!this.top(unit).subtypes?.includes('Basic')||unit.placedTurn>=p.turns||unit.evolvedTurn===p.turns)continue;for(const c of p.hand){const card=this.card(c);if(card.subtypes?.includes('Stage 2')){if(this.top(unit).name==='Charmander'&&card.name.startsWith('Mega Charizard'))result.push({ref,card:c});if(this.top(unit).name==='Dreepy'&&card.name==='Dragapult ex')result.push({ref,card:c});if(this.top(unit).name==="Team Rocket's Porygon"&&card.name==="Team Rocket's Porygon-Z")result.push({ref,card:c});}}}return result;}
+    attack(index,options={}){const p=this.current,op=this.players[1-this.turn],u=p.active;if(!this.canAttack(p))return this.fail('Serangan belum tersedia.');const move=this.validMoves(p).find(x=>x.index===index)?.attack;if(!move)return this.fail('Energy tidak cukup.');const source=this.top(u),defender=op.active,target=this.top(defender);let damage=Number.parseInt(move.damage,10)||0;let benchTarget=null;
+      if(move.name==='Inferno X'){const all=this.allRefs(p).flatMap(({unit})=>unit.energy.filter(e=>this.energyType(e)==='Fire').map(e=>({unit,e})));const selected=options.fireDiscards?.length?all.filter(x=>options.fireDiscards.includes(x.e.uid)):all.slice(0,Math.min(all.length,Math.ceil(this.remaining(defender)/90)));if(!selected.length)return this.fail('Inferno X perlu membuang Fire Energy.');damage=90*selected.length;for(const {unit,e} of selected){unit.energy.splice(unit.energy.indexOf(e),1);p.discard.push(e);}this.print('Inferno X membuang '+selected.length+' Fire Energy.');}
+      if(move.name==='Explosion Y'){if(u.energy.length<3)return this.fail('Perlu 3 Energy untuk dibuang.');for(let n=0;n<3;n++)p.discard.push(u.energy.pop());damage=280;if(Number.isInteger(options.targetBenchIndex)&&op.bench[options.targetBenchIndex])benchTarget=op.bench[options.targetBenchIndex];}
+      if(move.name==='Cruel Arrow'&&Number.isInteger(options.targetBenchIndex)&&op.bench[options.targetBenchIndex]){benchTarget=op.bench[options.targetBenchIndex];damage=100;}
+      if(move.name==='Phantom Dive'){damage=200;if(Number.isInteger(options.targetBenchIndex)&&op.bench[options.targetBenchIndex]){benchTarget=op.bench[options.targetBenchIndex];benchTarget.damage+=60;this.print('Phantom Dive memberi 60 damage ke Bench '+this.top(benchTarget).name+'.');}}
+      if(move.name==='Rocket Feathers'){const discards=(options.supporterDiscards||[]).map(uid=>this.handCard(p,uid)).filter(c=>c&&this.isTeamRocketSupporter(c));if(!discards.length&&p.hand.some(c=>this.isTeamRocketSupporter(c))&&!options.supporterDiscards){const auto=p.hand.filter(c=>this.isTeamRocketSupporter(c));discards.push(...auto);}for(const c of discards)p.discard.push(this.takeHand(p,c.uid));damage=60*discards.length;this.print('Rocket Feathers membuang '+discards.length+' Supporter Team Rocket ('+damage+' damage).');}
+      if(move.name==='R Command'){const count=p.discard.filter(c=>this.isTeamRocketSupporter(c)).length;damage=20*count;this.print('R Command: '+count+' Supporter Team Rocket di discard ('+damage+' damage).');}
+      if(move.name==='Deceit'){this.search(p,x=>typeOf(this.card(x))==='supporter',1,options.supporterUid?[options.supporterUid]:[]);}
+      if(move.name==='Hacking'){const myDump=options.handUid?this.handCard(p,options.handUid):p.hand[0];if(myDump)p.discard.push(this.takeHand(p,myDump.uid));if(op.hand.length){const opDump=op.hand.pop();op.discard.push(opDump);this.print(op.name+' membuang 1 kartu dari tangan via Hacking.');}}
+      if(move.name==='Mega Brave'||move.name==='Accelerating Stab')u.attackLocks[move.name]=p.turns+1;
+      if(move.name==='Aura Jab'){let energies=p.discard.filter(x=>this.basicFighting(x)).slice(0,3);for(let i=0;i<energies.length&&p.bench.length;i++){const e=energies[i],targetUnit=p.bench[options.energyTargets?.[i]??0]||p.bench[0];p.discard.splice(p.discard.indexOf(e),1);targetUnit.energy.push(e);}if(energies.length&&p.bench.length)this.print('Aura Jab memasang '+energies.length+' Fighting Energy dari discard ke Bench.');}
+      if(move.name==='Cosmic Beam'&&!p.bench.some(b=>this.top(b).name==='Lunatone'))damage=0;
+      if(p.blackBelt&&target.subtypes?.includes('ex'))damage+=40;
+      if(source.types?.includes('Fighting'))damage+=p.bonus;
+      if(move.name==='Cosmic Beam'||benchTarget){/* Printed effects bypass Weakness and Resistance. */}
+      else{if(target.weaknesses?.[0]?.type===source.types?.[0])damage*=2;if(target.resistances?.[0]?.type===source.types?.[0])damage=Math.max(0,damage-Math.abs(Number.parseInt(target.resistances[0].value,10)||0));}
+      const hit=benchTarget&&move.name!=='Phantom Dive'?benchTarget:defender;hit.damage+=damage;this.print(source.name+' memakai '+move.name+': '+damage+' damage'+(benchTarget&&move.name!=='Phantom Dive'?' ke Bench':'')+'.');
+      this.recordAction(p,'attack',source.name+' — '+move.name,damage+' damage ke '+this.top(hit).name+(benchTarget&&move.name!=='Phantom Dive'?' (Bench)':' (Active)'),{attacker:source.name,attackName:move.name,damage,target:this.top(hit).name,cardId:u.stack.at(-1)?.id});
+      if(move.name==='Wild Press')u.damage+=70;if(move.name==='Burning Flare')u.damage+=60;
+      this.checkAllKO();if(!this.over)this.endTurn();return this.ok();}
+    prizeCount(u){const c=this.top(u);return c.subtypes?.includes('MEGA')?3:c.subtypes?.includes('ex')?2:1;}
+    resolvePlayerKO(loser,winner){
+      if(this.over)return;
+      for(let i=loser.bench.length-1;i>=0;i--){
+        const u=loser.bench[i];
+        if(u&&u.damage>=this.hp(u)){
+          const name=this.top(u).name,count=this.prizeCount(u);
+          loser.discard.push(...u.stack,...u.energy,...(u.tool?[u.tool]:[]));
+          loser.bench.splice(i,1);
+          for(let j=0;j<count&&winner.prize.length;j++)winner.hand.push(winner.prize.pop());
+          loser.koThisTurn=true;
+          this.print(name+' (Bench) Knock Out. '+winner.name+' mengambil '+count+' Prize.');
+          this.recordAction(winner,'card',name,'Knock Out (Bench) — Mengambil '+count+' Prize',{cardId:u.stack.at(-1)?.id});
+          if(!winner.prize.length){this.finish(winner);return;}
+        }
+      }
+      if(loser.active&&loser.active.damage>=this.hp(loser.active)){
+        const u=loser.active;
+        const name=this.top(u).name,count=this.prizeCount(u);
+        loser.discard.push(...u.stack,...u.energy,...(u.tool?[u.tool]:[]));
+        loser.active=null;
+        for(let j=0;j<count&&winner.prize.length;j++)winner.hand.push(winner.prize.pop());
+        loser.koThisTurn=true;
+        this.print(name+' Knock Out. '+winner.name+' mengambil '+count+' Prize.');
+        this.recordAction(winner,'card',name,'Knock Out — Mengambil '+count+' Prize',{cardId:u.stack.at(-1)?.id});
+        if(!winner.prize.length){this.finish(winner);return;}
+        if(!loser.bench.length){this.finish(winner);return;}
+        if(loser===this.bot)this.promote(loser,0);
+        else this.pendingPromotion=0;
+      }
+    }
+    checkAllKO(){
+      if(this.over)return;
+      const op=this.players[1-this.turn],p=this.current;
+      this.resolvePlayerKO(op,p);
+      if(!this.over)this.resolvePlayerKO(p,op);
+    }
+    resolveKO(loser,winner){return this.resolvePlayerKO(loser,winner);}
+    promote(p,index){if(!p.bench[index])return this.fail('Pilih Pokémon Bench.');p.active=p.bench.splice(index,1)[0];this.pendingPromotion=null;this.print(p.name+' memilih '+this.top(p.active).name+' sebagai Active.');return this.ok();}
+    finish(winner){this.over=true;this.winner=winner;this.print(winner.name+' menang!');}
+    endTurn(){if(this.over)return;const old=this.current;for(const p of this.players)if(p.active?.poisoned){p.active.damage+=10;}this.checkAllKO();if(this.over)return;if(old.active)old.active.paralyzed=false;this.turn=1-this.turn;const next=this.current;next.turns++;next.energyUsed=false;next.supporterUsed=false;next.stadiumUsed=false;next.retreated=false;next.bonus=0;next.blackBelt=false;next.koLastTurn=next.koThisTurn;next.koThisTurn=false;if(!this.draw(next,1)){this.finish(old);return;}this.print('Giliran '+next.name+': mengambil 1 kartu.');}
+    aiTurn(){if(this.over||this.turn!==1||this.pendingPromotion!==null)return;const p=this.bot;for(const c of [...p.hand])if(this.isBasic(c)&&p.bench.length<5){p.bench.push(this.unit(this.takeHand(p,c.uid),p.turns));this.print('CPU menaruh '+this.name(c)+' di Bench.');this.recordAction(p,'card',this.name(c),'Masuk ke Bench',{cardId:c.id,subtype:'Basic'});if(c.id==='me3-62')this.lastDitchCatch(p);}
+      const charLine=this.allRefs(p).some(x=>['Charmander','Charmeleon','Mega Charizard X ex'].includes(this.top(x.unit).name));
+      const needed=!charLine?'me2-11':p.hand.some(x=>x.id==='me2-13')?null:'me2-13';
+      for(const id of ['me1-121','me2pt5-198','me1-131']){
+        const item=p.hand.find(x=>x.id===id);if(!item)continue;
+        let found=p.deck.find(x=>x.id===(id==='me2pt5-198'&&charLine?'me2-12':needed));
+        if(id==='me1-121')found=p.deck.find(x=>x.id==='me2-13');
+        if(id==='me1-131'&&p.hand.length<3)continue;
+        if(!found)continue;
+        p.discard.push(this.takeHand(p,item.uid));
+        if(id==='me1-131')for(let i=0;i<2;i++){const spare=p.hand.find(x=>!['me2-11','me2-12','me2-13','me1-125','sve-2'].includes(x.id))||p.hand.at(-1);p.discard.push(this.takeHand(p,spare.uid));}
+        p.deck.splice(p.deck.indexOf(found),1);p.hand.push(found);shuffle(p.deck,this.random);this.print('CPU memakai '+this.name(item)+' mencari '+this.name(found)+'.');
+        this.recordAction(p,'card',this.name(item),'Mencari '+this.name(found),{cardId:item.id,subtype:'Item'});
+      }
+      for(const c of [...p.hand])if(this.isBasic(c)&&p.bench.length<5){p.bench.push(this.unit(this.takeHand(p,c.uid),p.turns));this.print('CPU menaruh '+this.name(c)+' di Bench.');this.recordAction(p,'card',this.name(c),'Masuk ke Bench',{cardId:c.id,subtype:'Basic'});}
+      const trolley=p.hand.find(c=>c.id==='sv8-185');if(trolley&&p.bench.length<5){p.discard.push(this.takeHand(p,trolley.uid));this.recordAction(p,'card','Precious Trolley','Dimainkan (Item)',{cardId:trolley.id,subtype:'Item'});for(const c of p.deck.filter(x=>this.isBasic(x)).slice(0,5-p.bench.length)){p.deck.splice(p.deck.indexOf(c),1);p.bench.push(this.unit(c,p.turns));this.recordAction(p,'card',this.name(c),'Masuk ke Bench via Trolley',{cardId:c.id,subtype:'Basic'});}shuffle(p.deck,this.random);this.print('CPU memainkan Precious Trolley.');}
+      for(const c of [...p.hand]){const card=this.card(c);if(!card.evolvesFrom)continue;const u=this.allRefs(p).map(x=>x.unit).find(x=>this.canEvolve(p,card,x));if(u){u.stack.push(this.takeHand(p,c.uid));u.evolvedTurn=p.turns;u.poisoned=false;u.paralyzed=false;this.print('CPU mengevolusikan '+card.name+'.');this.recordAction(p,'card',card.name,'Evolusi',{cardId:c.id,subtype:'Evolution'});}}
+      const candy=p.hand.find(c=>c.id==='me1-125'),pair=this.rareCandyOptions(p);if(candy&&pair.length){p.discard.push(this.takeHand(p,candy.uid));const x=pair[0];this.unitAt(p,x.ref).stack.push(this.takeHand(p,x.card.uid));this.unitAt(p,x.ref).evolvedTurn=p.turns;this.print('CPU memakai Rare Candy.');this.recordAction(p,'card','Rare Candy','Dimainkan (Item)',{cardId:candy.id,subtype:'Item'});this.recordAction(p,'card',this.card(x.card).name,'Evolusi via Rare Candy',{cardId:x.card.id,subtype:'Evolution'});}
+      const retrieval=p.hand.find(x=>x.id==='me4-108');if(retrieval&&p.discard.some(x=>x.id==='sve-2')){p.discard.push(this.takeHand(p,retrieval.uid));this.recover(p,x=>x.id==='sve-2',2);this.print('CPU memakai Energy Retrieval.');this.recordAction(p,'card','Energy Retrieval','Mengambil Energy',{cardId:retrieval.id,subtype:'Item'});}
+      const recycler=p.hand.find(x=>x.id==='me3-108');if(recycler&&p.discard.filter(x=>x.id==='sve-2').length>=3){p.discard.push(this.takeHand(p,recycler.uid));for(const x of p.discard.filter(x=>x.id==='sve-2').slice(0,5)){p.discard.splice(p.discard.indexOf(x),1);p.deck.push(x);}shuffle(p.deck,this.random);this.print('CPU memakai Energy Recycler.');this.recordAction(p,'card','Energy Recycler','Memasukkan Energy ke dek',{cardId:recycler.id,subtype:'Item'});}
+      const fireMega=this.allRefs(p).some(x=>this.top(x.unit).subtypes?.includes('MEGA')&&this.top(x.unit).types?.includes('Fire'));
+      if(fireMega&&this.allRefs(p).some(x=>this.top(x.unit).name==='Oricorio ex'))for(const c of [...p.hand].filter(x=>x.id==='sve-2')){const target=p.bench.find(x=>['Charmander','Charmeleon','Mega Charizard X ex'].includes(this.top(x).name))||p.bench.find(x=>this.top(x).types?.includes('Fire'));if(!target)break;target.energy.push(this.takeHand(p,c.uid));this.print('CPU memakai Excited Turbo.');this.recordAction(p,'skill','Excited Turbo (Oricorio ex)','Memasang Fire Energy ke Bench',{abilityName:'Excited Turbo',cardId:'me2-18'});}
+      if(!p.energyUsed){const c=p.hand.find(x=>x.id==='sve-2');if(c){const target=this.allRefs(p).map(x=>x.unit).find(x=>this.top(x).name==='Mega Charizard X ex'&&x.energy.length<2)||this.allRefs(p).map(x=>x.unit).find(x=>['Charmander','Charmeleon','Mega Charizard X ex'].includes(this.top(x).name))||p.active;target.energy.push(this.takeHand(p,c.uid));p.energyUsed=true;this.print('CPU memasang Fire Energy.');this.recordAction(p,'card',this.name(c),'Dipasang ke '+this.top(target).name,{cardId:c.id,subtype:'Energy'});}}
+      const balloon=p.hand.find(c=>c.id==='zsv10pt5-79');if(balloon){const target=this.allRefs(p).map(x=>x.unit).find(x=>!x.tool);if(target){target.tool=this.takeHand(p,balloon.uid);this.print('CPU memasang Air Balloon.');this.recordAction(p,'card',this.name(balloon),'Dipasang ke '+this.top(target).name,{cardId:balloon.id,subtype:'Tool'});}}
+      if(p.turns>1&&!p.supporterUsed){for(const id of ['me2-89','me1-119','me3-76']){const c=p.hand.find(x=>x.id===id);if(!c)continue;p.discard.push(this.takeHand(p,c.uid));p.supporterUsed=true;if(id==='me2-89')this.search(p,x=>this.basicFire(x),7);else if(id==='me1-119'){p.deck.push(...p.hand.splice(0));shuffle(p.deck,this.random);this.draw(p,p.prize.length===6?8:6);}else for(const q of this.players){q.deck.push(...q.hand.splice(0));shuffle(q.deck,this.random);this.draw(q,4);}this.print('CPU memainkan '+this.name(c)+'.');this.recordAction(p,'card',this.name(c),'Dimainkan (Supporter)',{cardId:c.id,subtype:'Supporter'});break;}}
+      const ready=p.bench.findIndex(u=>this.top(u).name==='Mega Charizard X ex'&&u.energy.filter(e=>this.energyType(e)==='Fire').length>=2);
+      if(ready>=0&&this.top(p.active).name!=='Mega Charizard X ex'){
+        const sw=p.hand.find(x=>x.id==='me1-130');
+        if(sw){p.discard.push(this.takeHand(p,sw.uid));this.gust(p,ready);this.print('CPU memainkan Switch.');this.recordAction(p,'card','Switch','Dimainkan (Item)',{cardId:sw.id,subtype:'Item'});}
+        else if(this.canRetreat(p)){const old=p.active;for(let i=0;i<this.retreatCost(old);i++)p.discard.push(old.energy.pop());p.active=p.bench.splice(ready,1)[0];p.bench.push(old);p.retreated=true;this.print('CPU mundur ke Mega Charizard X ex.');}
+      }
+      const moves=this.validMoves(p);if(moves.length){const best=moves.find(x=>x.attack.name==='Inferno X')||moves.sort((a,b)=>(Number.parseInt(b.attack.damage,10)||0)-(Number.parseInt(a.attack.damage,10)||0))[0];const result=this.attack(best.index);if(!result.ok){this.print('CPU mengakhiri giliran.');this.endTurn();}}else{this.print('CPU mengakhiri giliran.');this.endTurn();}}
+  }
+  return{Game,DECKS,cardType:typeOf};
+});

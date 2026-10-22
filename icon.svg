@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Ikon kartu TCG">
+<rect width="512" height="512" rx="104" fill="#101b2a"/>
+<rect x="97" y="55" width="318" height="402" rx="30" fill="#edc958" stroke="#fff4c7" stroke-width="12"/>
+<rect x="123" y="82" width="266" height="348" rx="16" fill="#244667"/>
+<circle cx="256" cy="236" r="104" fill="#e85b54"/>
+<path d="M152 236h208a104 104 0 0 1-208 0" fill="#f4f7fb"/>
+<path d="M152 236h208" stroke="#142233" stroke-width="18"/>
+<circle cx="256" cy="236" r="29" fill="#f4f7fb" stroke="#142233" stroke-width="16"/>
+<text x="256" y="386" text-anchor="middle" fill="#f8e6ab" font-family="Arial,sans-serif" font-size="54" font-weight="700">TCG</text>
+</svg>

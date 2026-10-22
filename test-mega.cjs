@@ -1,0 +1,54 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const {Game,DECKS}=require('./mega-engine.js');
+require('./pro-ai.js').install(Game,require('./lucario-ai.js').takeTurn);
+const window={};vm.runInNewContext(fs.readFileSync('tcg-data.js','utf8'),{window});
+const cards=window.CARD_DATA;
+for(const deck of Object.values(DECKS))assert.equal(Object.values(deck).reduce((a,b)=>a+b,0),60);
+assert.equal(cards.length,59);
+assert.ok(cards.filter(c=>c.supertype!=='Energy').every(c=>['H','I','J'].includes(c.regulationMark)));
+const game=new Game(cards,()=>0.37,['lucario','charizard']);
+let uid=100000;
+const instance=id=>({uid:uid++,id});
+const unit=(id,turn=0)=>game.unit(instance(id),turn);
+function total(p){return p.deck.length+p.hand.length+p.prize.length+p.discard.length+(p.active?.stack.length||0)+(p.active?.energy.length||0)+(p.active?.tool?1:0)+p.bench.reduce((s,u)=>s+u.stack.length+u.energy.length+(u.tool?1:0),0);}
+assert.equal(total(game.me),60);assert.equal(total(game.bot),60);
+assert.equal(game.me.deckName,'lucario');assert.equal(game.bot.deckName,'charizard');
+const swapped=new Game(cards,()=>0.37);assert.equal(swapped.me.deckName,'charizard');assert.equal(swapped.bot.deckName,'lucario');
+assert.equal(game.canAttack(game.me),false);
+game.me.turns=2;
+game.me.active=unit('me2pt5-112');
+const lucario=instance('me2pt5-113');game.me.hand.push(lucario);
+assert.equal(game.evolve(lucario.uid,'active').ok,true);
+assert.equal(game.top(game.me.active).name,'Mega Lucario ex');
+game.me.active.energy=[instance('sve-6')];
+assert.deepEqual(Array.from(game.validMoves(game.me),x=>x.attack.name),['Aura Jab']);
+game.me.bench=[unit('me1-72')];game.me.discard.push(instance('sve-6'));
+const before=game.me.bench[0].energy.length;
+assert.equal(game.attack(0,{energyTargets:[0]}).ok,true);
+assert.equal(game.me.bench[0].energy.length,before+1,'Aura Jab accelerates Fighting Energy');
+
+const ko=new Game(cards,()=>0.42,['lucario','charizard']);ko.me.turns=2;ko.me.active=unit('me2pt5-113');ko.me.active.damage=340;ko.me.bench=[unit('me1-72')];
+const prizes=ko.bot.prize.length;ko.resolveKO(ko.me,ko.bot);
+assert.equal(ko.bot.prize.length,prizes-3,'Mega KO gives three Prize cards');
+
+const fire=new Game(cards,()=>0.43,['lucario','charizard']);fire.turn=1;fire.bot.turns=2;fire.bot.active=unit('me2-13');fire.bot.active.energy=[instance('sve-2'),instance('sve-2')];fire.bot.bench=[unit('me2-11')];fire.bot.bench[0].energy=[instance('sve-2')];
+fire.me.active=unit('me1-72');fire.me.bench=[unit('me2pt5-112')];
+assert.equal(fire.attack(0,{fireDiscards:fire.bot.active.energy.map(x=>x.uid)}).ok,true);
+assert.equal(fire.bot.discard.filter(x=>x.id==='sve-2').length,2,'Inferno X discards selected Fire Energy');
+
+const candy=new Game(cards,()=>0.47,['lucario','charizard']);candy.me.turns=2;candy.me.active=unit('me2pt5-112');
+assert.equal(candy.rareCandyOptions().length,0,'Rare Candy cannot evolve Riolu into Charizard');
+const ai=new Game(cards,()=>0.61);ai.endTurn();ai.aiTurn();assert.equal(ai.turn,0,'CPU finishes its turn');
+const catchGame=new Game(cards,()=>0.37);
+const meowth=instance('me3-62'),boss=instance('me1-114'),lillie=instance('me1-119');
+catchGame.me.hand.push(meowth);catchGame.me.deck.push(boss,lillie);
+assert.equal(catchGame.playBasic(meowth.uid,{supporterUid:boss.uid}).ok,true);
+assert.ok(catchGame.me.hand.some(c=>c.uid===boss.uid),'Last-Ditch Catch immediately adds chosen Supporter to hand');
+assert.equal(catchGame.me.abilityFlags.lastDitch,catchGame.me.turns);
+assert.equal(catchGame.me.bench.at(-1).stack[0].uid,meowth.uid);
+const anotherMeowth=instance('me3-62');catchGame.me.hand.push(anotherMeowth);
+catchGame.playBasic(anotherMeowth.uid);
+assert.ok(catchGame.me.deck.some(c=>c.uid===lillie.uid),'Last-Ditch Catch is limited to once per turn');
+console.log('Mega deck and rules tests passed.');

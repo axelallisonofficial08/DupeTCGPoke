@@ -1,0 +1,10 @@
+{
+  "name": "pokemon-tcg-mega-duel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local Mega Charizard X versus CPU Mega Lucario Pokémon TCG webapp",
+  "scripts": {
+    "start": "node server.cjs",
+    "test": "node test-mega.cjs && node test-pro-ai.cjs && node test-lucario-ai.cjs && node test-webapp.cjs"
+  }
+}

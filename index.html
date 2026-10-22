@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101b2a"><meta name="description" content="Team Rocket's Honchkrow & Porygon-Z melawan Dragapult ex dengan kartu resmi format Standard.">
+  <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css"><title>Pokémon TCG — Team Rocket vs Dragapult ex</title>
+</head>
+<body>
+  <header class="topbar"><div><h1>Pokémon TCG <span>Rocket vs Dragapult</span></h1><p>Kamu: Team Rocket's Honchkrow & Porygon-Z · CPU: Dragapult ex</p></div><button id="newGame" class="secondary">Permainan baru</button></header>
+  <div class="layout">
+    <main class="game-board">
+      <section id="opponent" class="field opponent" aria-label="Arena lawan"></section>
+      <div class="turnbar"><strong id="turnStatus"></strong><section id="stadiumZone" class="stadium-zone" data-drop="stadium" aria-label="Stadium bersama"></section><div class="turn-actions"><button id="attackButton">Serang</button><button id="retreatButton">Mundur</button><button id="endButton">Akhiri giliran</button></div></div>
+      <section id="player" class="field player" aria-label="Arenamu"></section>
+      <section class="hand-panel"><div class="hand-head"><h2>Tanganmu <span id="handCount"></span></h2><span id="handHint">Seret kartu ke zona yang sesuai, atau klik kartu.</span></div><div id="hand" class="hand-list"></div></section>
+    </main>
+    <aside class="sidebar">
+      <section class="history-panel">
+        <div class="history-head">
+          <h2>Riwayat Aksi</h2>
+          <span class="history-sub">Kartu, Skill & Serangan</span>
+        </div>
+        <div class="history-player-tabs" role="tablist" aria-label="Pilih Pemain">
+          <button type="button" id="tabPlayer" class="player-tab active" role="tab" aria-selected="true">
+            <span class="player-tab-label">🧑 Kamu</span>
+            <span id="playerActionCount" class="history-count-badge">0</span>
+          </button>
+          <button type="button" id="tabCpu" class="player-tab" role="tab" aria-selected="false">
+            <span class="player-tab-label">🤖 CPU</span>
+            <span id="cpuActionCount" class="history-count-badge">0</span>
+          </button>
+        </div>
+        <div class="history-filter-chips" role="group" aria-label="Filter kategori riwayat">
+          <button type="button" class="filter-chip active" data-filter="all">Semua (<span id="countAll">0</span>)</button>
+          <button type="button" class="filter-chip" data-filter="card">🃏 Kartu (<span id="countCard">0</span>)</button>
+          <button type="button" class="filter-chip" data-filter="skill">⚡ Skill (<span id="countSkill">0</span>)</button>
+          <button type="button" class="filter-chip" data-filter="attack">⚔️ Attack (<span id="countAttack">0</span>)</button>
+        </div>
+        <div id="historyList" class="history-list" aria-live="polite"></div>
+      </section>
+
+      <details class="sidebar-collapsible" open>
+        <summary>Log Mentah Pertandingan</summary>
+        <div id="log" class="log" aria-live="polite"></div>
+      </details>
+
+      <details class="sidebar-collapsible">
+        <summary>Langkah Cepat & Aturan</summary>
+        <div class="guide-body">
+          <p>Seret <b>Basic</b> ke Bench. Seret <b>evolusi, Energy, atau Pokémon Tool</b> ke Pokémon. Seret <b>Item dan Supporter</b> ke area Trainer, serta <b>Stadium ke area tengah</b>.</p>
+          <p>Stadium di tengah berlaku untuk kedua pemain. Kamu atau CPU dapat menggantinya dengan Stadium berbeda.</p>
+          <p><b>Tangan CPU terbuka</b> di bawah arena lawan. Klik kartunya untuk membaca detail; bagian ini bisa dilipat.</p>
+          <p>Klik Pokémon milikmu untuk melihat Ability, serangan yang tersedia, dan pilihan mundur.</p>
+          <p>Serangan hanya aktif bila Energy terpasang memenuhi biaya serangan. Mega Pokémon ex memberi 3 Prize saat Knock Out.</p>
+          <p><b>CPU Dragapult:</b> Membangun lini Dreepy ke Drakloak (Recon Directive) dan Dragapult ex, mempercepat evolusi dengan Rare Candy, lalu melancarkan Phantom Dive (200 damage Active + 60 damage Bench).</p>
+        </div>
+      </details>
+
+      <div class="format-note">Dek berdasarkan daftar resmi Pokémon TCG Live/strategi Pokémon. Game ini masih prototipe, bukan produk resmi Pokémon.</div>
+    </aside>
+  </div>
+  <div id="modal" class="modal" hidden><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><h2 id="dialogTitle"></h2><p id="dialogText"></p><div id="dialogChoices" class="dialog-choices"></div><button id="dialogCancel" class="secondary">Batal</button></div></div>
+  <script src="tcg-data.js?v=20261014c"></script>
+  <script src="mega-engine.js?v=20261014c"></script>
+  <script src="pro-ai.js?v=20261014c"></script>
+  <script src="lucario-ai.js?v=20261014c"></script>
+  <script src="dragapult-ai.js?v=20261014c"></script>
+  <script src="app.js?v=20261014c"></script>
+  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        for(let reg of regs) reg.update();
+      });
+      window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=20261014c').catch(console.warn));
+    }
+  </script>
+</body>
+</html>
