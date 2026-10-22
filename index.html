@@ -120,6 +120,30 @@
       </div>
     </div>
   </div>
+  <div id="trafficAuthModal" class="modal" hidden>
+    <div class="dialog traffic-auth-dialog" role="dialog" aria-modal="true" aria-labelledby="trafficAuthTitle">
+      <div class="traffic-auth-header">
+        <div class="auth-icon-wrap">🔒</div>
+        <h2 id="trafficAuthTitle">Akses Terproteksi Traffic</h2>
+        <p class="traffic-auth-desc">Halaman traffic & pelacak pengunjung online diproteksi. Masukkan username dan password untuk membuka.</p>
+      </div>
+      <form id="trafficAuthForm" class="traffic-auth-form" onsubmit="return false;">
+        <div class="auth-form-field">
+          <label for="trafficAuthUser">Username:</label>
+          <input type="text" id="trafficAuthUser" placeholder="Masukkan username" autocomplete="username" required />
+        </div>
+        <div class="auth-form-field">
+          <label for="trafficAuthPass">Password:</label>
+          <input type="password" id="trafficAuthPass" placeholder="Masukkan password" autocomplete="current-password" required />
+        </div>
+        <div id="trafficAuthError" class="auth-error-msg" hidden></div>
+        <div class="traffic-auth-actions">
+          <button type="button" id="trafficAuthCancel" class="secondary">Batal</button>
+          <button type="submit" id="trafficAuthSubmit" class="primary-confirm">🔑 Masuk</button>
+        </div>
+      </form>
+    </div>
+  </div>
   <div id="trafficModal" class="modal" hidden>
     <div class="dialog traffic-dialog" role="dialog" aria-modal="true" aria-labelledby="trafficModalTitle">
       <div class="traffic-modal-header">
@@ -198,7 +222,10 @@
         <span class="traffic-live-indicator">
           <span class="pulse-indicator"></span> Auto-sync real-time
         </span>
-        <button id="trafficModalClose" type="button" class="secondary">Tutup</button>
+        <div class="traffic-footer-actions">
+          <button id="trafficLogoutBtn" type="button" class="traffic-logout-btn" title="Kunci kembali panel traffic">🔒 Logout</button>
+          <button id="trafficModalClose" type="button" class="secondary">Tutup</button>
+        </div>
       </div>
     </div>
   </div>

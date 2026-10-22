@@ -1307,6 +1307,7 @@
     const trafficBtn = $('trafficBtn');
     const modal = $('trafficModal');
     const closeBtn = $('trafficModalClose');
+    const logoutBtn = $('trafficLogoutBtn');
     const tabLive = $('tabTrafficLive');
     const tabGh = $('tabTrafficGithub');
     const contentLive = $('trafficContentLive');
@@ -1315,7 +1316,19 @@
     const saveNickBtn = $('saveNicknameBtn');
     const refreshBtn = $('refreshTrafficBtn');
 
-    function openModal(){
+    // Auth modal elements
+    const authModal = $('trafficAuthModal');
+    const authForm = $('trafficAuthForm');
+    const authUser = $('trafficAuthUser');
+    const authPass = $('trafficAuthPass');
+    const authError = $('trafficAuthError');
+    const authCancel = $('trafficAuthCancel');
+
+    function isAuthenticated(){
+      return sessionStorage.getItem('tcg_traffic_auth') === 'true';
+    }
+
+    function showTrafficDialog(){
       if(!modal) return;
       modal.hidden = false;
       if(window.TrafficPresence){
@@ -1325,11 +1338,62 @@
       }
     }
 
+    function showAuthDialog(){
+      if(!authModal) return;
+      if(authError) authError.hidden = true;
+      if(authPass) authPass.value = '';
+      authModal.hidden = false;
+      setTimeout(() => {
+        if(authUser && !authUser.value) authUser.focus();
+        else if(authPass) authPass.focus();
+      }, 50);
+    }
+
+    function handleTrafficBtnClick(){
+      if(isAuthenticated()){
+        showTrafficDialog();
+      } else {
+        showAuthDialog();
+      }
+    }
+
+    function handleAuthSubmit(){
+      const u = (authUser?.value || '').trim();
+      const p = authPass?.value || '';
+      if(u === 'kaito' && p === 'k@it01412kudo'){
+        sessionStorage.setItem('tcg_traffic_auth', 'true');
+        if(authModal) authModal.hidden = true;
+        if(authError) authError.hidden = true;
+        if(authPass) authPass.value = '';
+        showTrafficDialog();
+      } else {
+        if(authError){
+          authError.textContent = '❌ Username atau password salah. Akses ditolak!';
+          authError.hidden = false;
+        }
+        if(authPass){
+          authPass.value = '';
+          authPass.focus();
+        }
+      }
+    }
+
+    if(trafficBtn) trafficBtn.onclick = handleTrafficBtnClick;
+    if(authForm) authForm.onsubmit = (e) => { e.preventDefault(); handleAuthSubmit(); };
+    if(authCancel) authCancel.onclick = () => { if(authModal) authModal.hidden = true; };
+    if(authModal) authModal.onclick = (e) => { if(e.target === authModal) authModal.hidden = true; };
+
+    if(logoutBtn){
+      logoutBtn.onclick = () => {
+        sessionStorage.removeItem('tcg_traffic_auth');
+        if(modal) modal.hidden = true;
+      };
+    }
+
     function closeModal(){
       if(modal) modal.hidden = true;
     }
 
-    if(trafficBtn) trafficBtn.onclick = openModal;
     if(closeBtn) closeBtn.onclick = closeModal;
 
     if(modal){

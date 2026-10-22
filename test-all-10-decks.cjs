@@ -19,9 +19,9 @@ const EXPECTED_DECKS = [
   'lucario',
   'charizard',
   'ragingbolt',
-  'gardevoir',
+  'terapagos',
   'miraidon',
-  'gholdengo',
+  'archaludon',
   'zoroark',
   'grimmsnarl'
 ];

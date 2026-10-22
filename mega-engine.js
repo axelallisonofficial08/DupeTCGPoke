@@ -35,11 +35,11 @@
       'zsv10pt5-79':2,'sv8-185':1,'me1-119':4,'me1-114':3,'me3-76':2,
       'sve-1':8,'sve-4':6,'sve-6':8
     },
-    gardevoir:{
-      'sv1-84':4,'sv1-85':4,'sv1-86':3,'sv4pt5-77':2,'sv1-89':2,'sv6pt5-38':1,
-      'me1-131':4,'me1-125':4,'me2pt5-198':2,'me2pt5-196':2,'me1-130':2,
-      'zsv10pt5-79':2,'sv8-185':1,'me1-119':4,'me1-114':3,'me3-76':2,
-      'me3-108':1,'sve-5':17
+    terapagos:{
+      'sv7-128':3,'sv7-114':4,'sv7-115':4,'sv7-119':2,'sv6pt5-38':1,'me3-62':1,
+      'me1-131':4,'me2pt5-198':4,'me1-114':4,'me1-119':4,'me1-130':3,
+      'me2pt5-196':2,'zsv10pt5-79':2,'sv8-185':1,'me3-76':3,'me4-108':2,
+      'me3-108':2,'sve-4':14
     },
     miraidon:{
       'sv1-81':4,'sv4-70':2,'sv1-78':3,'sv1-79':2,'sv6pt5-38':1,'me3-62':1,
@@ -47,11 +47,11 @@
       'zsv10pt5-79':3,'sv8-185':1,'me1-119':4,'me1-114':4,'me3-76':2,
       'sve-4':18
     },
-    gholdengo:{
-      'sv4-198':4,'sv4-139':4,'sv6pt5-38':1,'me3-62':1,
-      'me1-131':4,'me2pt5-198':4,'me4-108':4,'me3-108':2,'me2pt5-196':2,
-      'me1-130':3,'zsv10pt5-79':2,'sv8-185':1,'me1-119':4,'me1-114':3,'me3-76':2,
-      'sve-8':19
+    archaludon:{
+      'sv8-129':4,'sv8-130':4,'sv6pt5-38':1,'me3-62':1,
+      'me1-131':4,'me2pt5-198':4,'me1-114':4,'me1-119':4,'me1-130':3,
+      'me2pt5-196':2,'zsv10pt5-79':2,'sv8-185':1,'me3-76':3,'me4-108':2,
+      'me1-125':4,'sve-8':17
     },
     zoroark:{
       'sv9-97':4,'sv9-98':4,'sv9-116':2,'sv6pt5-38':1,'me3-62':1,
@@ -61,9 +61,9 @@
       'sve-7':17
     },
     grimmsnarl:{
-      'sv10-128':4,'sv10-129':4,'sv10-130':4,'sv6pt5-38':1,'me3-62':1,
-      'me1-131':4,'me1-125':4,'me2pt5-198':4,'me2pt5-196':2,'me1-130':3,
-      'zsv10pt5-79':2,'sv8-185':1,'me1-119':4,'me1-114':3,'me3-76':2,
+      'sv10-134':4,'sv10-135':3,'sv10-136':3,'sv10-137':2,'sv6pt5-38':1,'me3-62':1,
+      'me1-131':4,'me2pt5-198':4,'me1-114':4,'me1-119':4,'me1-130':3,
+      'me2pt5-196':2,'zsv10pt5-79':2,'sv8-185':1,'me3-76':3,'me4-108':2,
       'sve-7':17
     }
   };
@@ -109,13 +109,13 @@
       preferredActive:'sv5-123',
       description:'Bellowing Thunder menghabisi lawan dengan 70x per Basic Energy yang dibuang via Teal Mask Ogerpon.'
     },
-    gardevoir:{
-      id:'gardevoir',
-      name:'Gardevoir ex',
-      types:['Psychic'],
-      icon:'🔮',
-      preferredActive:'sv1-84',
-      description:'Psychic Embrace mengambil Energy tak terbatas dari discard untuk serangan Miracle Force & Scream Tail.'
+    terapagos:{
+      id:'terapagos',
+      name:'Terapagos ex / Noctowl',
+      types:['Colorless'],
+      icon:'🐢',
+      preferredActive:'sv7-128',
+      description:'Unified Beatdown 30x per benched Pokémon, disokong mesin pencari Trainer Jewel Seeker Noctowl & Curling Wall Bouffalant.'
     },
     miraidon:{
       id:'miraidon',
@@ -125,13 +125,13 @@
       preferredActive:'sv1-81',
       description:'Tandem Unit langsung mengisi Bench dengan Pokémon Lightning, siap melancarkan Photon Blaster 220.'
     },
-    gholdengo:{
-      id:'gholdengo',
-      name:'Gholdengo ex',
+    archaludon:{
+      id:'archaludon',
+      name:'Archaludon ex',
       types:['Metal'],
-      icon:'🪙',
-      preferredActive:'sv4-198',
-      description:'Coin Bonus melimpah dengan draw kartu setiap giliran, Make It Rain 50x per Energy dari tangan.'
+      icon:'🌉',
+      preferredActive:'sv8-129',
+      description:'Metal Defender mengakselerasi Metal Energy dari discard saat evolusi untuk meluncurkan Iron Blaster 220 damage.'
     },
     zoroark:{
       id:'zoroark',
@@ -146,12 +146,12 @@
       name:"Marnie's Grimmsnarl ex",
       types:['Darkness'],
       icon:'👹',
-      preferredActive:'sv10-128',
-      description:'Tormenting Horn mengunci lawan agar tidak bisa menyerang, disusul pukulan berat Shadow Impact 220.'
+      preferredActive:'sv10-134',
+      description:'Punk Up mengisi hingga 5 Darkness Energy ke Pokémon Marnie saat evolusi, disusul Shadow Bullet 180 damage + 30 ke bench lawan.'
     }
   };
 
-  const ALLOWED=new Set(['G','H','I','J']);
+  const ALLOWED=new Set(['H','I','J']);
   let serial=0;
   const shuffle=(array,random)=>{for(let i=array.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;};
   const typeOf=c=>c.supertype==='Pokémon'?'pokemon':c.supertype==='Energy'?'energy':c.subtypes?.includes('Pokémon Tool')?'tool':c.subtypes?.includes('Supporter')?'supporter':c.subtypes?.includes('Stadium')?'stadium':'item';
@@ -243,7 +243,12 @@
     isTeamRocketSupporter(c){const printed=this.card(c);return printed.supertype==='Trainer'&&printed.subtypes?.includes('Supporter')&&printed.name.includes("Team Rocket's");}
     playBasic(uid,options={}){if(!this.canAct())return this.fail('Bukan giliranmu.');const p=this.me,c=this.handCard(p,uid);if(!c||!this.isBasic(c))return this.fail('Pilih Pokémon Basic.');if(p.bench.length>=5)return this.fail('Bench penuh.');p.bench.push(this.unit(this.takeHand(p,uid),p.turns));this.print(this.name(c)+' masuk Bench.');this.recordAction(p,'card',this.name(c),'Masuk ke Bench',{cardId:c.id,subtype:'Basic'});if(c.id==='me3-62'&&!options.skipAbility)this.lastDitchCatch(p,options.supporterUid);return this.ok();}
     lastDitchCatch(p,supporterUid){if(p.abilityFlags.lastDitch===p.turns||p.abilityFlags['global_ability_Last-Ditch Catch']===p.turns)return false;const choices=p.deck.filter(x=>typeOf(this.card(x))==='supporter');const c=choices.find(x=>x.uid===supporterUid)||choices[0];if(!c)return false;p.deck.splice(p.deck.indexOf(c),1);p.hand.push(c);shuffle(p.deck,this.random);p.abilityFlags.lastDitch=p.turns;p.abilityFlags['global_ability_Last-Ditch Catch']=p.turns;this.print('Last-Ditch Catch: Meowth ex memperlihatkan '+this.name(c)+' dan memasukkannya ke tangan.');this.recordAction(p,'skill','Last-Ditch Catch (Meowth ex)','Mengambil '+this.name(c)+' dari dek',{abilityName:'Last-Ditch Catch',cardId:'me3-62'});return true;}
-    evolve(uid,ref,opponentBenchIndex=null){if(!this.canAct())return this.fail('Bukan giliranmu.');const p=this.me,c=this.handCard(p,uid),u=this.unitAt(p,ref);if(!c||!this.canEvolve(p,this.card(c),u))return this.fail('Evolusi belum tersedia atau target tidak cocok.');const prevName=this.top(u).name;u.stack.push(this.takeHand(p,uid));u.evolvedTurn=p.turns;u.poisoned=false;u.paralyzed=false;u.attackLocks={};u.abilityUsedTurn=-1;this.print('Evolusi menjadi '+this.top(u).name+'.');this.recordAction(p,'card',this.card(c).name,'Evolusi dari '+prevName+' ('+(ref==='active'?'Active':'Bench')+')',{cardId:c.id,subtype:'Evolution'});if(this.top(u).name==='Hariyama'&&this.bot.bench.length&&opponentBenchIndex!==null){this.gust(this.bot,opponentBenchIndex);this.recordAction(p,'skill','Heave-Ho Catcher (Hariyama)','Menarik Pokémon lawan ke Active',{abilityName:'Heave-Ho Catcher',cardId:'me1-73'});}this.checkAllKO();return this.ok();}
+    evolve(uid,ref,opponentBenchIndex=null){if(!this.canAct())return this.fail('Bukan giliranmu.');const p=this.me,c=this.handCard(p,uid),u=this.unitAt(p,ref);if(!c||!this.canEvolve(p,this.card(c),u))return this.fail('Evolusi belum tersedia atau target tidak cocok.');const prevName=this.top(u).name;u.stack.push(this.takeHand(p,uid));u.evolvedTurn=p.turns;u.poisoned=false;u.paralyzed=false;u.attackLocks={};u.abilityUsedTurn=-1;this.print('Evolusi menjadi '+this.top(u).name+'.');this.recordAction(p,'card',this.card(c).name,'Evolusi dari '+prevName+' ('+(ref==='active'?'Active':'Bench')+')',{cardId:c.id,subtype:'Evolution'});
+    if(this.top(u).name==='Hariyama'&&this.bot.bench.length&&opponentBenchIndex!==null){this.gust(this.bot,opponentBenchIndex);this.recordAction(p,'skill','Heave-Ho Catcher (Hariyama)','Menarik Pokémon lawan ke Active',{abilityName:'Heave-Ho Catcher',cardId:'me1-73'});}
+    if(this.top(u).name==='Archaludon ex'){const disc=p.discard.filter(x=>this.energyType(x)==='Metal').slice(0,2);for(const e of disc){p.discard.splice(p.discard.indexOf(e),1);u.energy.push(e);}if(disc.length){this.print('Metal Defender: Archaludon ex memasang '+disc.length+' Metal Energy dari discard.');this.recordAction(p,'skill','Metal Defender (Archaludon ex)','Memasang '+disc.length+' Metal Energy dari discard',{cardId:'sv8-130'});}}
+    if(this.top(u).name==="Marnie's Grimmsnarl ex"){const dk=p.deck.filter(x=>this.energyType(x)==='Darkness').slice(0,3);for(const e of dk){p.deck.splice(p.deck.indexOf(e),1);u.energy.push(e);}shuffle(p.deck,this.random);if(dk.length){this.print("Punk Up: Marnie's Grimmsnarl ex memasang "+dk.length+" Darkness Energy dari dek.");this.recordAction(p,'skill',"Punk Up (Marnie's Grimmsnarl ex)","Memasang "+dk.length+" Darkness Energy dari dek",{cardId:'sv10-136'});}}
+    if(this.top(u).name==='Noctowl'){const tr=p.deck.filter(x=>this.card(x).supertype==='Trainer').slice(0,2);for(const t of tr){p.deck.splice(p.deck.indexOf(t),1);p.hand.push(t);}shuffle(p.deck,this.random);if(tr.length){this.print('Jewel Seeker: Noctowl mengambil '+tr.map(t=>this.name(t)).join(', ')+' dari dek.');this.recordAction(p,'skill','Jewel Seeker (Noctowl)','Mengambil '+tr.length+' Trainer dari dek',{cardId:'sv7-115'});}}
+    this.checkAllKO();return this.ok();}
     attachEnergy(uid,ref){if(!this.canAct())return this.fail('Bukan giliranmu.');const p=this.me,c=this.handCard(p,uid),u=this.unitAt(p,ref);if(!c||typeOf(this.card(c))!=='energy'||!u)return this.fail('Pilih Energy dan Pokémon target.');if(p.energyUsed)return this.fail('Energy sudah dipasang giliran ini.');u.energy.push(this.takeHand(p,uid));p.energyUsed=true;this.print(this.name(c)+' dipasang ke '+this.top(u).name+'.');this.recordAction(p,'card',this.name(c),'Dipasang ke '+this.top(u).name,{cardId:c.id,subtype:'Energy'});return this.ok();}
     attachTool(uid,ref){if(!this.canAct())return this.fail('Bukan giliranmu.');const p=this.me,c=this.handCard(p,uid),u=this.unitAt(p,ref);if(!c||typeOf(this.card(c))!=='tool'||!u||u.tool)return this.fail('Tool atau target tidak tersedia.');u.tool=this.takeHand(p,uid);this.print(this.name(c)+' dipasang ke '+this.top(u).name+'.');this.recordAction(p,'card',this.name(c),'Dipasang ke '+this.top(u).name,{cardId:c.id,subtype:'Tool'});return this.ok();}
     ability(unit){return this.top(unit).abilities?.[0]||null;}
@@ -423,7 +428,7 @@
             if(this.top(unit).name==='Dreepy'&&card.name==='Dragapult ex')result.push({ref,card:c});
             if(this.top(unit).name==="Team Rocket's Porygon"&&card.name==="Team Rocket's Porygon-Z")result.push({ref,card:c});
             if(this.top(unit).name==='Ralts'&&card.name==='Gardevoir ex')result.push({ref,card:c});
-            if(this.top(unit).name==='Impidimp'&&card.name.includes('Grimmsnarl'))result.push({ref,card:c});
+            if((this.top(unit).name==='Impidimp'||this.top(unit).name==="Marnie's Impidimp")&&card.name.includes('Grimmsnarl'))result.push({ref,card:c});
           }
         }
       }
@@ -474,6 +479,33 @@
       }
       if(move.name==='Amp You Very Much'){
         p.ampPrizeBonus=true;
+      }
+      if(move.name==='Shadow Bullet'){
+        damage=180;
+        if(op.bench.length){
+          const bIdx=Number.isInteger(options.targetBenchIndex)&&op.bench[options.targetBenchIndex]?options.targetBenchIndex:0;
+          op.bench[bIdx].damage+=30;
+          this.print("Shadow Bullet memberi 30 damage ke Bench "+this.top(op.bench[bIdx]).name+".");
+        }
+      }
+      if(move.name==='Iron Blaster'){
+        damage=220;
+        u.attackLocks['Iron Blaster']=p.turns+1;
+      }
+      if(move.name==='Unified Beatdown'){
+        damage=30*p.bench.length;
+        this.print('Unified Beatdown: '+damage+' damage ('+p.bench.length+' benched Pokémon).');
+      }
+      if(move.name==='Crown Opal'){
+        damage=180;
+      }
+      if(move.name==='Spiky Wheel'){
+        damage=30;
+        if(u.energy.length&&p.bench.length){
+          const moved=u.energy.pop();
+          p.bench[0].energy.push(moved);
+          this.print('Spiky Wheel memindahkan 1 Energy ke Bench.');
+        }
       }
       if(move.name==='Tormenting Horn'){
         defender.attackLocks['All']=p.turns+1;
