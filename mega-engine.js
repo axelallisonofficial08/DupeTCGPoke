@@ -41,12 +41,6 @@
       'me2pt5-196':2,'zsv10pt5-79':2,'sv8-185':1,'me3-76':3,'me4-108':2,
       'me3-108':2,'sve-4':14
     },
-    miraidon:{
-      'sv1-81':4,'sv4-70':2,'sv1-78':3,'sv1-79':2,'sv6pt5-38':1,'me3-62':1,
-      'me1-131':4,'me2pt5-198':3,'me1-130':4,'me4-108':2,'me2pt5-196':2,
-      'zsv10pt5-79':3,'sv8-185':1,'me1-119':4,'me1-114':4,'me3-76':2,
-      'sve-4':18
-    },
     archaludon:{
       'sv8-129':4,'sv8-130':4,'sv6pt5-38':1,'me3-62':1,
       'me1-131':4,'me2pt5-198':4,'me1-114':4,'me1-119':4,'me1-130':3,
@@ -65,6 +59,11 @@
       'me1-131':4,'me2pt5-198':4,'me1-114':4,'me1-119':4,'me1-130':3,
       'me2pt5-196':2,'zsv10pt5-79':2,'sv8-185':1,'me3-76':3,'me4-108':2,
       'sve-7':17
+    },
+    exeggutor:{
+      'sv8-1':4,'30c-2':4,'sv6-25':3,'sv8pt5-4':2,'sv6pt5-38':1,
+      'me1-131':4,'me2pt5-198':4,'me1-119':4,'me1-114':3,'me3-76':2,'me1-130':3,
+      'me4-108':2,'me2pt5-196':2,'sv5-152':1,'zsv10pt5-79':2,'sve-1':19
     }
   };
 
@@ -117,14 +116,6 @@
       preferredActive:'sv7-128',
       description:'Unified Beatdown 30x per benched Pokémon, disokong mesin pencari Trainer Jewel Seeker Noctowl & Curling Wall Bouffalant.'
     },
-    miraidon:{
-      id:'miraidon',
-      name:'Miraidon ex',
-      types:['Lightning'],
-      icon:'⚡',
-      preferredActive:'sv1-81',
-      description:'Tandem Unit langsung mengisi Bench dengan Pokémon Lightning, siap melancarkan Photon Blaster 220.'
-    },
     archaludon:{
       id:'archaludon',
       name:'Archaludon ex',
@@ -148,6 +139,14 @@
       icon:'👹',
       preferredActive:'sv10-134',
       description:'Punk Up mengisi hingga 5 Darkness Energy ke Pokémon Marnie saat evolusi, disusul Shadow Bullet 180 damage + 30 ke bench lawan.'
+    },
+    exeggutor:{
+      id:'exeggutor',
+      name:'Alolan Exeggutor / Ogerpon ex',
+      types:['Grass'],
+      icon:'🌴',
+      preferredActive:'30c-2',
+      description:'Scale Up menambah +250 HP saat memiliki 6 Grass Energy (total 400 HP + Hero\'s Cape 500 HP), didukung Teal Dance Ogerpon dan Itchy Pollen Budew.'
     }
   };
 
@@ -198,7 +197,16 @@
     unitAt(p,ref){return ref==='active'?p.active:p.bench[ref];}allRefs(p){return[{ref:'active',unit:p.active},...p.bench.map((unit,ref)=>({ref,unit}))].filter(x=>x.unit);}
     handCard(p,uid){return p.hand.find(c=>c.uid===uid);}takeHand(p,uid){const i=p.hand.findIndex(c=>c.uid===uid);return i<0?null:p.hand.splice(i,1)[0];}
     fail(error){return{ok:false,error};}ok(){return{ok:true};}canAct(){return!this.over&&this.turn===0&&this.pendingPromotion===null;}
-    hp(unit){return Number(this.top(unit).hp)-(this.stadium?.id==='sv8-177'&&this.top(unit).subtypes?.includes('Stage 2')?30:0);}
+    hp(unit){
+      let val = Number(this.top(unit).hp);
+      if(this.stadium?.id==='sv8-177'&&this.top(unit).subtypes?.includes('Stage 2')) val -= 30;
+      if(unit.tool?.id==='sv5-152') val += 100;
+      if(this.top(unit).name==='Alolan Exeggutor'){
+        const grassCount = unit.energy.filter(e => this.energyType(e)==='Grass').length;
+        if(grassCount >= 6) val += 250;
+      }
+      return val;
+    }
     remaining(unit){return Math.max(0,this.hp(unit)-unit.damage);}
     retreatCost(unit){let n=this.top(unit).convertedRetreatCost||0;if(unit.tool?.id==='zsv10pt5-79')n=Math.max(0,n-2);if(this.top(unit).name==='Charmander'&&!unit.energy.length)n=0;return n;}
     energyType(instance){
@@ -359,7 +367,7 @@
     search(p,predicate,n=1,chosen=[]){const selected=[];for(const uid of chosen){const c=p.deck.find(x=>x.uid===uid&&predicate(x));if(c&&!selected.includes(c)&&selected.length<n)selected.push(c);}if(!chosen.length)selected.push(...p.deck.filter(predicate).slice(0,n));for(const c of selected){p.deck.splice(p.deck.indexOf(c),1);p.hand.push(c);}shuffle(p.deck,this.random);if(selected.length)this.print(p.name+' mengambil '+selected.map(c=>this.name(c)).join(', ')+' dari dek.');return selected.length;}
     recover(p,predicate,n=1,chosen=[]){const selected=[];for(const uid of chosen){const c=p.discard.find(x=>x.uid===uid&&predicate(x));if(c&&!selected.includes(c)&&selected.length<n)selected.push(c);}if(!chosen.length)selected.push(...p.discard.filter(predicate).slice(0,n));for(const c of selected){p.discard.splice(p.discard.indexOf(c),1);p.hand.push(c);}if(selected.length)this.print(p.name+' mengambil '+selected.map(c=>this.name(c)).join(', ')+' dari discard.');return selected.length;}
     basicFighting(c){return c.id==='sve-6';}basicFire(c){return c.id==='sve-2';}
-    playTrainer(uid,options={}){if(!this.canAct())return this.fail('Bukan giliranmu.');const p=this.me,c=this.handCard(p,uid);if(!c)return this.fail('Kartu tidak di tangan.');const printed=this.card(c),type=typeOf(printed),id=c.id;if(!['supporter','item','stadium'].includes(type))return this.fail('Bukan kartu Trainer.');if(type==='supporter'&&(p.supporterUsed||(p.turns===1&&id!=='sv10-177')))return this.fail('Supporter belum dapat dimainkan.');if(id==='sv10-170'&&!p.koLastTurn)return this.fail("Archer hanya bisa dimainkan jika Pokémon Team Rocket KO pada giliran lawan sebelumnya.");if(type==='stadium'&&(p.stadiumUsed||this.stadium?.id===id))return this.fail('Stadium belum dapat dimainkan.');const otherCards=p.hand.filter(x=>x.uid!==uid).length;if(id==='me1-131'&&otherCards<2)return this.fail('Ultra Ball perlu 2 kartu lain untuk dibuang.');if(id==='sv6-163'&&otherCards<3)return this.fail('Secret Box perlu 3 kartu lain untuk dibuang.');if(id==='me1-130'&&!p.bench.length)return this.fail('Bench kosong.');if(id==='me1-114'&&!this.bot.bench.length)return this.fail('Bench lawan kosong.');if(id==='me1-125'&&!this.rareCandyOptions(p).length)return this.fail('Rare Candy tidak memiliki pasangan evolusi.');
+    playTrainer(uid,options={}){if(!this.canAct())return this.fail('Bukan giliranmu.');const p=this.me,c=this.handCard(p,uid);if(!c)return this.fail('Kartu tidak di tangan.');const printed=this.card(c),type=typeOf(printed),id=c.id;if(!['supporter','item','stadium'].includes(type))return this.fail('Bukan kartu Trainer.');if(type==='item'&&p.abilityFlags['item_lock_'+p.turns])return this.fail("Kamu tidak dapat memainkan kartu Item pada giliran ini karena efek Itchy Pollen.");if(type==='supporter'&&(p.supporterUsed||(p.turns===1&&id!=='sv10-177')))return this.fail('Supporter belum dapat dimainkan.');if(id==='sv10-170'&&!p.koLastTurn)return this.fail("Archer hanya bisa dimainkan jika Pokémon Team Rocket KO pada giliran lawan sebelumnya.");if(type==='stadium'&&(p.stadiumUsed||this.stadium?.id===id))return this.fail('Stadium belum dapat dimainkan.');const otherCards=p.hand.filter(x=>x.uid!==uid).length;if(id==='me1-131'&&otherCards<2)return this.fail('Ultra Ball perlu 2 kartu lain untuk dibuang.');if(id==='sv6-163'&&otherCards<3)return this.fail('Secret Box perlu 3 kartu lain untuk dibuang.');if(id==='me1-130'&&!p.bench.length)return this.fail('Bench kosong.');if(id==='me1-114'&&!this.bot.bench.length)return this.fail('Bench lawan kosong.');if(id==='me1-125'&&!this.rareCandyOptions(p).length)return this.fail('Rare Candy tidak memiliki pasangan evolusi.');
       const played=this.takeHand(p,uid);if(type==='supporter')p.supporterUsed=true;if(type==='stadium'){p.stadiumUsed=true;const old=this.stadium;if(old)old.owner.discard.push(old.card);this.stadium={id,card:played,owner:p};this.checkAllKO();}else p.discard.push(played);
       const fromDeck=(predicate,n=1)=>this.search(p,predicate,n,options.chosen||[]);
       const fromDiscard=(predicate,n=1)=>this.recover(p,predicate,n,options.chosen||[]);
@@ -521,6 +529,69 @@
       if(move.name==='Shadow Impact'){
         u.damage+=30;
         this.print('Shadow Impact memberi 30 recoil damage ke '+source.name+'.');
+      }
+      if(move.name==="Barrage O'Clock"){
+        const totalEnergy=(u.energy?.length||0)+(defender.energy?.length||0);
+        let heads=0;
+        for(let i=0;i<totalEnergy;i++){
+          if(this.random()<0.5)heads++;
+        }
+        damage=60*heads;
+        this.print("Barrage O'Clock: "+totalEnergy+" Energy terpasang ("+heads+" heads, "+damage+" damage).");
+      }
+      if(move.name==='Tropical Frenzy'){
+        damage=150;
+        const handEnergies=p.hand.filter(c=>basicEnergy(this.card(c)));
+        if(handEnergies.length){
+          for(const e of handEnergies){
+            this.takeHand(p,e.uid);
+            u.energy.push(e);
+          }
+          this.print('Tropical Frenzy memasang '+handEnergies.length+' Basic Grass Energy dari tangan.');
+        }
+      }
+      if(move.name==='Precocious Evolution'){
+        damage=0;
+        const evo=p.deck.find(x=>this.card(x).evolvesFrom==='Exeggcute');
+        if(evo){
+          p.deck.splice(p.deck.indexOf(evo),1);
+          u.stack.push(evo);
+          u.evolvedTurn=p.turns;
+          shuffle(p.deck,this.random);
+          this.print('Precocious Evolution: Exeggcute berevolusi menjadi '+this.name(evo)+'.');
+          this.recordAction(p,'skill','Precocious Evolution','Berevolusi menjadi '+this.name(evo),{cardId:evo.id});
+        }
+      }
+      if(move.name==='Swinging Sphene'){
+        const isHeads=this.random()<0.5;
+        if(isHeads){
+          if(this.isBasic(defender)){
+            defender.damage=this.top(defender).hp;
+            this.print('Swinging Sphene (Heads): Meng-KO Pokémon Active '+this.top(defender).name+'.');
+          }else{
+            this.print('Swinging Sphene (Heads): Pokémon Active lawan bukan Basic.');
+          }
+        }else{
+          const bIdx=Number.isInteger(options.targetBenchIndex)&&op.bench[options.targetBenchIndex]?options.targetBenchIndex:0;
+          if(op.bench[bIdx]&&this.isBasic(op.bench[bIdx])){
+            op.bench[bIdx].damage=this.top(op.bench[bIdx]).hp;
+            this.print('Swinging Sphene (Tails): Meng-KO Pokémon Bench '+this.top(op.bench[bIdx]).name+'.');
+          }else{
+            this.print('Swinging Sphene (Tails): Tidak ada target Basic di Bench.');
+          }
+        }
+        damage=0;
+      }
+      if(move.name==='Mega Drain'){
+        damage=150;
+        const heal = Math.min(u.damage, 50);
+        u.damage -= heal;
+        if(heal > 0) this.print('Mega Drain menyembuhkan '+heal+' damage pada '+source.name+'.');
+      }
+      if(move.name==='Itchy Pollen'){
+        damage=10;
+        op.abilityFlags['item_lock_'+(op.turns+1)] = true;
+        this.print("Itchy Pollen: Lawan tidak dapat memainkan kartu Item pada giliran berikutnya.");
       }
       if(move.name==='Photon Blaster'){
         u.attackLocks['Photon Blaster']=p.turns+1;

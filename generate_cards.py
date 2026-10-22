@@ -35,7 +35,15 @@ CARD_SPECS = [
     # Grimmsnarl Line
     {"id": "sv10-128", "name": "Impidimp", "type": "Darkness", "stage": "Basic", "hp": "70", "attacks": [("Scratch", "20")], "bg": (30, 41, 59), "accent": (168, 85, 247)},
     {"id": "sv10-129", "name": "Morgrem", "type": "Darkness", "stage": "Stage 1", "hp": "90", "attacks": [("Bite", "50")], "bg": (24, 24, 27), "accent": (192, 132, 252)},
-    {"id": "sv10-130", "name": "Marnie's Grimmsnarl ex", "type": "Darkness", "stage": "Stage 2", "hp": "310", "attacks": [("Tormenting Horn", "170 (Can't attack)"), ("Shadow Impact", "220")], "bg": (9, 9, 11), "accent": (236, 72, 153)}
+    {"id": "sv10-130", "name": "Marnie's Grimmsnarl ex", "type": "Darkness", "stage": "Stage 2", "hp": "310", "attacks": [("Tormenting Horn", "170 (Can't attack)"), ("Shadow Impact", "220")], "bg": (9, 9, 11), "accent": (236, 72, 153)},
+    
+    # Exeggutor Line
+    {"id": "sv8-1", "name": "Exeggcute", "type": "Grass", "stage": "Basic", "hp": "30", "attacks": [("Precocious Evolution", "Search deck for evolution")], "bg": (20, 83, 45), "accent": (74, 222, 128)},
+    {"id": "sv8-3", "name": "Exeggutor", "type": "Grass", "stage": "Stage 1", "hp": "130", "attacks": [("Barrage O'Clock", "60x flip coin per Energy on Actives")], "bg": (20, 83, 45), "accent": (74, 222, 128)},
+    {"id": "sv8-133", "name": "Alolan Exeggutor ex", "type": "Grass", "stage": "Stage 1", "hp": "300", "attacks": [("Tropical Frenzy", "150 (Attach Energy from hand)"), ("Swinging Sphene", "KO opponent's Pokemon")], "bg": (15, 65, 35), "accent": (250, 204, 21)},
+    {"id": "30c-2", "name": "Alolan Exeggutor", "type": "Grass", "stage": "Stage 1", "hp": "150", "ability": "Scale Up: +250 HP if >=6 Grass Energy", "attacks": [("Mega Drain", "150 (Heal 50)")], "bg": (20, 83, 45), "accent": (74, 222, 128)},
+    {"id": "sv8pt5-4", "name": "Budew", "type": "Grass", "stage": "Basic", "hp": "30", "attacks": [("Itchy Pollen", "10 (Opponent can't play Items)")], "bg": (22, 101, 52), "accent": (134, 239, 172)},
+    {"id": "sv5-152", "name": "Hero's Cape", "type": "Colorless", "kind": "Tool", "stage": "ACE SPEC", "hp": "+100", "ability": "Tool: Pokémon gets +100 HP", "bg": (153, 27, 27), "accent": (248, 113, 113)}
 ]
 
 def render_card(spec):

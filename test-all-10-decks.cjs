@@ -20,10 +20,10 @@ const EXPECTED_DECKS = [
   'charizard',
   'ragingbolt',
   'terapagos',
-  'miraidon',
   'archaludon',
   'zoroark',
-  'grimmsnarl'
+  'grimmsnarl',
+  'exeggutor'
 ];
 
 assert.equal(EXPECTED_DECKS.length, 10, 'Must have 10 decks');
