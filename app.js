@@ -20,6 +20,7 @@
     button.title=printed.name;
     const image=document.createElement('img');
     image.src='assets/cards/'+instance.id+'.png';image.alt=printed.name;image.draggable=false;
+    image.onerror=()=>{if(printed.images?.small||printed.images?.large)image.src=printed.images.small||printed.images.large;};
     button.append(image);
     if(unit){
       const hp=document.createElement('span');hp.className='badge';hp.textContent=game.remaining(unit)+' HP';button.append(hp);
@@ -151,6 +152,7 @@
     img.src='assets/cards/'+card.id+'.png';
     img.alt=card.name;
     img.className='card-detail-img';
+    img.onerror=()=>{if(card.images?.large||card.images?.small)img.src=card.images.large||card.images.small;};
     visualCol.append(img);
 
     // Right: Detailed information & stats
@@ -589,6 +591,7 @@
     pkmnImg.alt=card.name;
     pkmnImg.style.cssText='width:56px;height:auto;border-radius:4px;border:1px solid #38bdf8;cursor:pointer;flex:none;';
     pkmnImg.title='Klik untuk melihat kartu ukuran penuh';
+    pkmnImg.onerror=()=>{if(card.images?.large||card.images?.small)pkmnImg.src=card.images.large||card.images.small;};
     pkmnImg.onclick=()=>showCardDetailsById(card.id);
     const pkmnMeta=document.createElement('div');
     pkmnMeta.style.cssText='display:flex;flex-direction:column;gap:3px;font-size:12px;min-width:0;';
@@ -664,7 +667,17 @@
         const pill=document.createElement('div');pill.className='inspector-energy-pill';
         const eCard=game.card(e);
         const eType=game.energyType(e);
-        pill.textContent=(eType==='Fire'?'🔥':eType==='Fighting'?'🥊':eType==='Darkness'?'🌑':eType==='Psychic'?'🔮':eType==='Rocket'?'🚀':'⚡')+' '+eCard.name;
+        pill.title='Klik untuk melihat kartu '+eCard.name;
+        pill.style.cursor='pointer';
+        const eThumb=document.createElement('img');
+        eThumb.className='energy-pill-thumb';
+        eThumb.src='assets/cards/'+e.id+'.png';
+        eThumb.alt=eCard.name;
+        eThumb.onerror=()=>{if(eCard.images?.small||eCard.images?.large)eThumb.src=eCard.images.small||eCard.images.large;};
+        const eSym=eType==='Grass'?'🌿':eType==='Fire'?'🔥':eType==='Water'?'💧':eType==='Lightning'?'⚡':eType==='Psychic'?'🔮':eType==='Fighting'?'🥊':eType==='Darkness'?'🌑':eType==='Metal'?'⚙️':eType==='Rocket'?'🚀':'⚡';
+        const txt=document.createElement('span');txt.textContent=eSym+' '+eCard.name;
+        pill.append(eThumb,txt);
+        pill.onclick=()=>showCardDetailsById(e.id);
         grid.append(pill);
       });
       energyBody.append(grid);
@@ -1197,6 +1210,9 @@
           cardImg.src = 'assets/cards/' + id + '.png';
           cardImg.alt = card.name;
           cardImg.loading = 'lazy';
+          cardImg.onerror = () => {
+            if (card.images?.small || card.images?.large) cardImg.src = card.images.small || card.images.large;
+          };
 
           const qtyBadge = document.createElement('span');
           qtyBadge.className = 'drawer-card-qty';

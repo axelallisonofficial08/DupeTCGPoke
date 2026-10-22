@@ -64,7 +64,9 @@
 .inspector-card-box p{margin:4px 0 0;color:#9eb8cb;font-size:11px}
 .inspector-ability-meta{display:inline-block;margin-left:6px;font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px;background:#3b2d10;color:#fde047;border:1px solid #854d0e}
 .inspector-energy-grid{display:flex;flex-wrap:wrap;gap:6px}
-.inspector-energy-pill{display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:6px;background:#162c42;border:1px solid #365879;font-size:11px;color:#f0f6fc}
+.inspector-energy-pill{display:flex;align-items:center;gap:6px;padding:3px 8px;border-radius:6px;background:#162c42;border:1px solid #365879;font-size:11px;color:#f0f6fc;cursor:pointer;transition:all .15s}
+.inspector-energy-pill:hover{background:#1f3d5c;border-color:#38bdf8;transform:translateY(-1px)}
+.energy-pill-thumb{width:20px;height:28px;object-fit:cover;border-radius:3px;box-shadow:0 1px 3px rgba(0,0,0,0.4);flex:none}
 .inspector-empty{color:#7691a3;font-size:12px;font-style:italic;padding:4px 0}
 .field-head-right{display:flex;align-items:center;gap:8px}
 .trash-btn{padding:3px 9px;font-size:11px;font-weight:700;border-radius:6px;border:1px solid #a855f7;background:#2b1644;color:#e9d5ff;cursor:pointer;transition:all .15s}

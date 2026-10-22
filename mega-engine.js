@@ -39,7 +39,7 @@
       'sv7-128':3,'sv7-114':4,'sv7-115':4,'sv7-119':2,'sv6pt5-38':1,'me3-62':1,
       'me1-131':4,'me2pt5-198':4,'me1-114':4,'me1-119':4,'me1-130':3,
       'me2pt5-196':2,'zsv10pt5-79':2,'sv8-185':1,'me3-76':3,'me4-108':2,
-      'me3-108':2,'sve-4':14
+      'me3-108':2,'sve-1':4,'sve-3':4,'sve-4':6
     },
     archaludon:{
       'sv8-129':4,'sv8-130':4,'sv6pt5-38':1,'me3-62':1,
@@ -111,10 +111,10 @@
     terapagos:{
       id:'terapagos',
       name:'Terapagos ex / Noctowl',
-      types:['Colorless'],
+      types:['Colorless','Water','Grass'],
       icon:'🐢',
       preferredActive:'sv7-128',
-      description:'Unified Beatdown 30x per benched Pokémon, disokong mesin pencari Trainer Jewel Seeker Noctowl & Curling Wall Bouffalant.'
+      description:'Unified Beatdown 30x per Pokémon Bench & Crown Opal (Grass/Water/Lightning), disokong mesin pencari Trainer Jewel Seeker Noctowl & Bouffalant.'
     },
     archaludon:{
       id:'archaludon',
