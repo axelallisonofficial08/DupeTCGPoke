@@ -8,9 +8,12 @@
   const fireCount=(g,u)=>u.energy.filter(e=>g.energyType(e)==='Fire').length;
   const shuffle=(list,random)=>{for(let i=list.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}return list;};
   function install(Game,lucarioTurn,dragapultTurn){
+    const defaultTurn=Game.prototype.aiTurn;
     Game.prototype.aiTurn=function(){
-      if(this.bot.deckName==='dragapult')return (dragapultTurn||(typeof PTCGDragapultAI!=='undefined'&&PTCGDragapultAI.takeTurn)||takeTurn)(this);
-      return this.bot.deckName==='lucario'?lucarioTurn(this):takeTurn(this);
+      if(this.bot.deckName==='dragapult')return (dragapultTurn||(typeof PTCGDragapultAI!=='undefined'&&PTCGDragapultAI.takeTurn)||defaultTurn.bind(this))(this);
+      if(this.bot.deckName==='lucario')return (lucarioTurn||defaultTurn.bind(this))(this);
+      if(this.bot.deckName==='charizard')return takeTurn(this);
+      return defaultTurn.call(this);
     };
   }
   function takeTurn(g){
