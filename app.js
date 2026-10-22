@@ -124,26 +124,142 @@
   async function openStadiumMenu(){
     if(!game.stadium)return;
     const card=game.stadium.card,printed=game.card(card);
-    const rules=(printed.rules||[]).join('\n');
     const options=[];
     if(printed.id==='sv10-173'){
       const canUse=game.canUseStadium(game.me);
       options.push({
-        label:'Gunakan Ability: Ambil 2 kartu dari dek',
+        label:'⚡ Gunakan Ability Stadium: Ambil 2 kartu',
         value:'use',
         disabled:!canUse
       });
     }
     options.push({label:'Tutup',value:'close'});
-    const choice=await ask(printed.name,rules||'Kartu Stadium di arena bersama.',options);
+    const dom=buildCardDetailDOM(printed);
+    const choice=await ask(printed.name,dom,options);
     if(choice==='use')apply(game.useStadium());
   }
   let activePlayerTab='player',activeHistoryFilter='all';
 
+  function buildCardDetailDOM(card,unit=null,customSubtitle=''){
+    const container=document.createElement('div');
+    container.className='card-detail-layout';
+
+    // Left: High-resolution card artwork
+    const visualCol=document.createElement('div');
+    visualCol.className='card-detail-visual';
+    const img=document.createElement('img');
+    img.src='assets/cards/'+card.id+'.png';
+    img.alt=card.name;
+    img.className='card-detail-img';
+    visualCol.append(img);
+
+    // Right: Detailed information & stats
+    const infoCol=document.createElement('div');
+    infoCol.className='card-detail-info';
+
+    // Badges: Supertype, Subtypes, HP
+    const badges=document.createElement('div');
+    badges.className='card-detail-badges';
+    const typeBadge=document.createElement('span');
+    typeBadge.className='cd-badge cd-type';
+    typeBadge.textContent=(card.types?card.types.join('/'):card.supertype);
+    badges.append(typeBadge);
+
+    if(card.subtypes&&card.subtypes.length){
+      const subBadge=document.createElement('span');
+      subBadge.className='cd-badge cd-sub';
+      subBadge.textContent=card.subtypes.join(' · ');
+      badges.append(subBadge);
+    }
+    if(card.hp){
+      const hpBadge=document.createElement('span');
+      hpBadge.className='cd-badge cd-hp';
+      hpBadge.textContent=(unit?game.remaining(unit)+' / '+card.hp:card.hp)+' HP';
+      badges.append(hpBadge);
+    }
+    infoCol.append(badges);
+
+    if(card.evolvesFrom){
+      const evo=document.createElement('div');
+      evo.className='cd-meta-row';
+      evo.innerHTML='<strong>Evolusi dari:</strong> '+card.evolvesFrom;
+      infoCol.append(evo);
+    }
+
+    // Ability
+    if(card.abilities&&card.abilities.length){
+      card.abilities.forEach(ab=>{
+        const abBox=document.createElement('div');
+        abBox.className='cd-box cd-ability-box';
+        const usage=game.abilityUsageType?game.abilityUsageType(ab.name):'once';
+        const usageTag=usage==='multi'?'Berulang kali':usage==='global_once'?'Global 1x / Turn':'1x / Turn (Kartu ini)';
+        abBox.innerHTML=`
+          <div class="cd-box-title">
+            <span class="cd-title-txt">⚡ Ability: ${ab.name}</span>
+            <span class="cd-usage-tag">${usageTag}</span>
+          </div>
+          <p class="cd-box-desc">${ab.text}</p>
+        `;
+        infoCol.append(abBox);
+      });
+    }
+
+    // Attacks
+    if(card.attacks&&card.attacks.length){
+      const atkSec=document.createElement('div');
+      atkSec.className='cd-attacks-section';
+      card.attacks.forEach(atk=>{
+        const atkBox=document.createElement('div');
+        atkBox.className='cd-box cd-attack-box';
+        const costSyms=(atk.cost||[]).map(c=>{
+          const sym=c==='Fire'?'🔥':c==='Fighting'?'🥊':c==='Psychic'?'🔮':c==='Grass'?'🌿':c==='Lightning'?'⚡':c==='Darkness'?'🌑':c==='Metal'?'⚙️':c==='Dragon'?'🐲':'⚪';
+          return `<span class="cd-cost-sym" title="${c}">${sym}</span>`;
+        }).join(' ');
+        atkBox.innerHTML=`
+          <div class="cd-attack-header">
+            <span class="cd-cost-wrap">${costSyms||'Free'}</span>
+            <strong class="cd-atk-name">${atk.name}</strong>
+            ${atk.damage?`<span class="cd-atk-dmg">${atk.damage} DMG</span>`:''}
+          </div>
+          ${atk.text?`<p class="cd-atk-text">${atk.text}</p>`:''}
+        `;
+        atkSec.append(atkBox);
+      });
+      infoCol.append(atkSec);
+    }
+
+    // Rules
+    if(card.rules&&card.rules.length){
+      const ruleBox=document.createElement('div');
+      ruleBox.className='cd-box cd-rule-box';
+      ruleBox.innerHTML=`<strong class="cd-rule-title">📜 Aturan Kartu:</strong><p class="cd-rule-text">${card.rules.join('<br>')}</p>`;
+      infoCol.append(ruleBox);
+    }
+
+    // Stats: Weakness, Resistance, Retreat
+    if(card.weaknesses||card.resistances||card.retreatCost){
+      const stats=document.createElement('div');
+      stats.className='cd-stats-row';
+      if(card.weaknesses&&card.weaknesses.length){
+        stats.innerHTML+=`<span class="cd-stat">Kelemahan: <b>${card.weaknesses.map(w=>w.type+' '+w.value).join(', ')}</b></span>`;
+      }
+      if(card.resistances&&card.resistances.length){
+        stats.innerHTML+=`<span class="cd-stat">Resistansi: <b>${card.resistances.map(r=>r.type+' '+r.value).join(', ')}</b></span>`;
+      }
+      if(card.retreatCost){
+        stats.innerHTML+=`<span class="cd-stat">Retreat: <b>${card.retreatCost.length} Energy</b></span>`;
+      }
+      infoCol.append(stats);
+    }
+
+    container.append(visualCol,infoCol);
+    return container;
+  }
+
   function showCardDetailsById(cardId){
     const card=game.cards[cardId];if(!card)return;
-    const text=[...(card.abilities||[]).map(a=>'Ability '+a.name+': '+a.text),...(card.attacks||[]).map(a=>a.name+' ('+a.cost.join('/')+'): '+a.damage+' · '+a.text),...(card.rules||[])].join('\n');
-    ask(card.name,text||'Detail kartu.',[{label:'Tutup',value:'close'}]);
+    const dom=buildCardDetailDOM(card);
+    ask(card.name,dom,[{label:'Tutup',value:'close'}]);
   }
   function renderHistory(){
     const isPlayer=activePlayerTab==='player';
@@ -281,8 +397,8 @@
   }
   function showOpponentCard(instance){
     const card=game.card(instance);
-    const text=[...(card.abilities||[]).map(a=>'Ability '+a.name+': '+a.text),...(card.attacks||[]).map(a=>a.name+' ('+a.cost.join('/')+'): '+a.damage+' · '+a.text),...(card.rules||[])].join('\n');
-    ask(card.name,text||'Kartu di tangan CPU.',[{label:'Tutup',value:'close'}]);
+    const dom=buildCardDetailDOM(card,null,'Tangan CPU');
+    ask(card.name+' (Tangan CPU)',dom,[{label:'Tutup',value:'close'}]);
   }
   async function apply(result){
     if(!result?.ok){
@@ -316,8 +432,8 @@
     if(!game.canAct())return;
     const instance=game.handCard(game.me,uid);if(!instance)return;
     const card=game.card(instance);
-    const printedText=[...(card.rules||[]),...(card.attacks||[]).map(a=>a.name+': '+a.text)].filter(Boolean).join('\n');
-    const choice=await ask(card.name,printedText||'Pilih cara memainkan kartu ini.',[{label:'Mainkan kartu',value:'play'}]);
+    const dom=buildCardDetailDOM(card);
+    const choice=await ask(card.name,dom,[{label:'🃏 Mainkan kartu',value:'play'},{label:'Batal',value:'close'}]);
     if(choice==='play')await playFromHand(uid,null,null);
   }
   async function chooseTarget(title,refs){
@@ -464,6 +580,23 @@
     const pkmnHead=document.createElement('div');pkmnHead.className='inspector-section-header';
     pkmnHead.innerHTML='<span class="inspector-section-title">🃏 Pokémon &amp; Kemampuan</span>';
     const pkmnBody=document.createElement('div');pkmnBody.className='inspector-section-body';
+
+    // Thumbnail & Header Meta
+    const thumbBox=document.createElement('div');
+    thumbBox.style.cssText='display:flex;gap:12px;align-items:center;margin-bottom:10px;background:#101a26;padding:8px;border-radius:8px;border:1px solid #28415a;';
+    const pkmnImg=document.createElement('img');
+    pkmnImg.src='assets/cards/'+card.id+'.png';
+    pkmnImg.alt=card.name;
+    pkmnImg.style.cssText='width:56px;height:auto;border-radius:4px;border:1px solid #38bdf8;cursor:pointer;flex:none;';
+    pkmnImg.title='Klik untuk melihat kartu ukuran penuh';
+    pkmnImg.onclick=()=>showCardDetailsById(card.id);
+    const pkmnMeta=document.createElement('div');
+    pkmnMeta.style.cssText='display:flex;flex-direction:column;gap:3px;font-size:12px;min-width:0;';
+    pkmnMeta.innerHTML='<strong style="font-size:13px;color:#f8fafc;">'+card.name+'</strong>'+
+      '<span style="color:#38bdf8;font-weight:700;">'+(card.types?.join('/')||'Colorless')+' · '+(card.subtypes?.join(' · ')||'Basic')+'</span>'+
+      '<span style="color:#94a3b8;font-size:11px;">HP Asli: '+card.hp+' · Sisa: <b style="color:#4ade80;">'+game.remaining(unit)+' HP</b></span>';
+    thumbBox.append(pkmnImg,pkmnMeta);
+    pkmnBody.append(thumbBox);
 
     // Evolution Stack
     const evoTrail=document.createElement('div');evoTrail.className='evolution-stack';
@@ -842,20 +975,139 @@
   });
 
   function updateTopbarTitles(){
-    const info = PTCGEngine.DECK_INFO;
-    const pInfo = (info && info[game.roles[0]]) || {name: game.roles[0]};
-    const cInfo = (info && info[game.roles[1]]) || {name: game.roles[1]};
+    const info = PTCGEngine.DECK_INFO || {};
+    const pInfo = info[game.roles[0]] || {name: game.roles[0], icon: '🃏'};
+    const cInfo = info[game.roles[1]] || {name: game.roles[1], icon: '🃏'};
     const matchupSpan = $('matchupSpan');
     if(matchupSpan) matchupSpan.textContent = pInfo.name + ' vs ' + cInfo.name;
     const subtitle = $('deckSubtitle');
     if(subtitle) subtitle.textContent = 'Kamu: ' + pInfo.name + ' · CPU: ' + cInfo.name;
     document.title = 'Pokémon TCG — ' + pInfo.name + ' vs ' + cInfo.name;
+
+    const pQuick = $('playerQuickSelect');
+    if(pQuick && pQuick.value !== game.roles[0]) pQuick.value = game.roles[0];
+    const cQuick = $('cpuQuickSelect');
+    if(cQuick && cQuick.value !== game.roles[1]) cQuick.value = game.roles[1];
+  }
+
+  function initQuickMatchupBar(){
+    const info = PTCGEngine.DECK_INFO || {};
+    const deckKeys = Object.keys(PTCGEngine.DECKS || {});
+    const pQuick = $('playerQuickSelect');
+    const cQuick = $('cpuQuickSelect');
+
+    if(pQuick){
+      pQuick.replaceChildren();
+      for(const key of deckKeys){
+        const opt = document.createElement('option');
+        opt.value = key;
+        const d = info[key];
+        opt.textContent = (d?.icon || '🃏') + ' ' + (d?.name || key);
+        if(key === game.roles[0]) opt.selected = true;
+        pQuick.append(opt);
+      }
+    }
+
+    if(cQuick){
+      cQuick.replaceChildren();
+      for(const key of deckKeys){
+        const opt = document.createElement('option');
+        opt.value = key;
+        const d = info[key];
+        opt.textContent = (d?.icon || '🤖') + ' ' + (d?.name || key);
+        if(key === game.roles[1]) opt.selected = true;
+        cQuick.append(opt);
+      }
+    }
+
+    const applyBtn = $('applyQuickMatchupBtn');
+    if(applyBtn){
+      applyBtn.onclick = () => {
+        const pVal = pQuick?.value || game.roles[0];
+        const cVal = cQuick?.value || game.roles[1];
+        try {
+          localStorage.setItem('ptcg_player_deck', pVal);
+          localStorage.setItem('ptcg_cpu_deck', cVal);
+        } catch (_) {}
+        game.newGame([pVal, cVal]);
+        updateTopbarTitles();
+        render();
+      };
+    }
   }
 
   let modalPlayerDeck = pDeck;
   let modalCpuDeck = cDeck;
+  let activeModalTab = 'player';
 
-  function renderDeckPickerList(containerId, activeDeckKey, onSelect){
+  function setModalTab(tab){
+    activeModalTab = tab;
+    const tabP = $('tabModalPlayer');
+    const tabC = $('tabModalCpu');
+    if(tabP){
+      tabP.classList.toggle('active', tab === 'player');
+      tabP.setAttribute('aria-selected', tab === 'player' ? 'true' : 'false');
+    }
+    if(tabC){
+      tabC.classList.toggle('active', tab === 'cpu');
+      tabC.setAttribute('aria-selected', tab === 'cpu' ? 'true' : 'false');
+    }
+    const container = $('deckColumnsContainer');
+    if(container){
+      container.className = 'deck-columns-container ' + (tab === 'cpu' ? 'show-cpu' : 'show-player');
+      if(window.innerWidth > 768){
+        const targetCol = tab === 'cpu' ? $('colCpu') : $('colPlayer');
+        if(targetCol) targetCol.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+      }
+    }
+  }
+
+  function updateMatchupSummary(){
+    const info = PTCGEngine.DECK_INFO || {};
+    const pD = info[modalPlayerDeck] || {name: modalPlayerDeck, icon: '🧑'};
+    const cD = info[modalCpuDeck] || {name: modalCpuDeck, icon: '🤖'};
+
+    const pBadge = $('playerDeckBadge');
+    if(pBadge) pBadge.textContent = (pD.icon || '🃏') + ' ' + pD.name;
+    const cBadge = $('cpuDeckBadge');
+    if(cBadge) cBadge.textContent = (cD.icon || '🤖') + ' ' + cD.name;
+
+    const pTabChosen = $('tabModalPlayerChosen');
+    if(pTabChosen) pTabChosen.textContent = (pD.icon || '') + ' ' + pD.name;
+    const cTabChosen = $('tabModalCpuChosen');
+    if(cTabChosen) cTabChosen.textContent = (cD.icon || '') + ' ' + cD.name;
+
+    const summary = $('matchupSummaryText');
+    if(summary) summary.textContent = (pD.icon || '🧑') + ' ' + pD.name + '  VS  ' + (cD.icon || '🤖') + ' ' + cD.name;
+  }
+
+  function setModalPlayerDeck(key){
+    modalPlayerDeck = key;
+    const list = $('playerDeckOptions');
+    if(list){
+      list.querySelectorAll('.deck-card-option').forEach(el => {
+        const isMatch = el.dataset.deckKey === key;
+        el.classList.toggle('selected', isMatch);
+        el.setAttribute('aria-checked', isMatch ? 'true' : 'false');
+      });
+    }
+    updateMatchupSummary();
+  }
+
+  function setModalCpuDeck(key){
+    modalCpuDeck = key;
+    const list = $('cpuDeckOptions');
+    if(list){
+      list.querySelectorAll('.deck-card-option').forEach(el => {
+        const isMatch = el.dataset.deckKey === key;
+        el.classList.toggle('selected', isMatch);
+        el.setAttribute('aria-checked', isMatch ? 'true' : 'false');
+      });
+    }
+    updateMatchupSummary();
+  }
+
+  function buildDeckPickerList(containerId, activeDeckKey, onSelect){
     const container = $(containerId);
     if(!container) return;
     container.replaceChildren();
@@ -865,88 +1117,99 @@
       const deck = info[key] || {name: key, types: [], icon: '🃏', description: ''};
       const opt = document.createElement('div');
       opt.className = 'deck-card-option' + (key === activeDeckKey ? ' selected' : '');
+      opt.dataset.deckKey = key;
       opt.tabIndex = 0;
       opt.role = 'radio';
       opt.setAttribute('aria-checked', key === activeDeckKey ? 'true' : 'false');
-      
+
       const thumb = document.createElement('img');
       thumb.className = 'deck-thumb';
       thumb.src = 'assets/cards/' + (deck.preferredActive || 'me2pt5-126') + '.png';
       thumb.alt = deck.name;
-      
+      thumb.loading = 'lazy';
+
       const meta = document.createElement('div');
       meta.className = 'deck-card-meta';
-      
+
       const title = document.createElement('div');
       title.className = 'deck-card-name';
       title.innerHTML = '<span>' + (deck.icon || '🃏') + '</span> <span>' + deck.name + '</span>';
-      
+
       const types = document.createElement('div');
       types.className = 'deck-card-types';
       types.textContent = (deck.types || []).join(' · ');
-      
+
       const desc = document.createElement('div');
       desc.className = 'deck-card-desc';
       desc.textContent = deck.description || '';
-      
+
       meta.append(title, types, desc);
       opt.append(thumb, meta);
-      
+
       opt.onclick = () => onSelect(key);
       opt.onkeydown = e => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(key); } };
       container.append(opt);
     }
   }
 
-  function updateDeckModalUI(){
-    const info = PTCGEngine.DECK_INFO || {};
-    const pBadge = $('playerDeckBadge');
-    if(pBadge) pBadge.textContent = (info[modalPlayerDeck]?.icon || '') + ' ' + (info[modalPlayerDeck]?.name || modalPlayerDeck);
-    const cBadge = $('cpuDeckBadge');
-    if(cBadge) cBadge.textContent = (info[modalCpuDeck]?.icon || '') + ' ' + (info[modalCpuDeck]?.name || modalCpuDeck);
-    
-    renderDeckPickerList('playerDeckOptions', modalPlayerDeck, key => {
-      modalPlayerDeck = key;
-      updateDeckModalUI();
+  function setupDeckModal(){
+    buildDeckPickerList('playerDeckOptions', modalPlayerDeck, key => {
+      setModalPlayerDeck(key);
     });
-    renderDeckPickerList('cpuDeckOptions', modalCpuDeck, key => {
-      modalCpuDeck = key;
-      updateDeckModalUI();
+    buildDeckPickerList('cpuDeckOptions', modalCpuDeck, key => {
+      setModalCpuDeck(key);
     });
+
+    const tabP = $('tabModalPlayer');
+    if(tabP) tabP.onclick = () => setModalTab('player');
+    const tabC = $('tabModalCpu');
+    if(tabC) tabC.onclick = () => setModalTab('cpu');
+
+    const randBtn = $('randomDecksBtn');
+    if(randBtn){
+      randBtn.onclick = () => {
+        const keys = Object.keys(PTCGEngine.DECKS || {});
+        const pR = keys[Math.floor(Math.random() * keys.length)];
+        const cR = keys[Math.floor(Math.random() * keys.length)];
+        setModalPlayerDeck(pR);
+        setModalCpuDeck(cR);
+      };
+    }
+
+    const confirmBtn = $('confirmDecksBtn');
+    if(confirmBtn){
+      confirmBtn.onclick = () => {
+        try {
+          localStorage.setItem('ptcg_player_deck', modalPlayerDeck);
+          localStorage.setItem('ptcg_cpu_deck', modalCpuDeck);
+        } catch (_) {}
+        game.newGame([modalPlayerDeck, modalCpuDeck]);
+        updateTopbarTitles();
+        render();
+        const modal = $('deckModal');
+        if(modal) modal.hidden = true;
+      };
+    }
+
+    const deckClose = $('deckModalClose');
+    if(deckClose) deckClose.onclick = () => { const m = $('deckModal'); if(m) m.hidden = true; };
   }
 
   function openDeckSelectorModal(){
     modalPlayerDeck = game.roles[0];
     modalCpuDeck = game.roles[1];
-    updateDeckModalUI();
+    setModalPlayerDeck(modalPlayerDeck);
+    setModalCpuDeck(modalCpuDeck);
+    setModalTab('player');
     const modal = $('deckModal');
     if(modal) modal.hidden = false;
   }
 
   const deckBtn = $('deckSelectBtn');
   if(deckBtn) deckBtn.onclick = openDeckSelectorModal;
-  const deckClose = $('deckModalClose');
-  if(deckClose) deckClose.onclick = () => { const m = $('deckModal'); if(m) m.hidden = true; };
-  const randBtn = $('randomDecksBtn');
-  if(randBtn) randBtn.onclick = () => {
-    const keys = Object.keys(PTCGEngine.DECKS || {});
-    modalPlayerDeck = keys[Math.floor(Math.random() * keys.length)];
-    modalCpuDeck = keys[Math.floor(Math.random() * keys.length)];
-    updateDeckModalUI();
-  };
-  const confirmBtn = $('confirmDecksBtn');
-  if(confirmBtn) confirmBtn.onclick = () => {
-    try {
-      localStorage.setItem('ptcg_player_deck', modalPlayerDeck);
-      localStorage.setItem('ptcg_cpu_deck', modalCpuDeck);
-    } catch (_) {}
-    game.newGame([modalPlayerDeck, modalCpuDeck]);
-    updateTopbarTitles();
-    render();
-    const modal = $('deckModal');
-    if(modal) modal.hidden = true;
-  };
 
+  initQuickMatchupBar();
+  setupDeckModal();
   updateTopbarTitles();
   render();
 })();
