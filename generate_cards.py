@@ -49,7 +49,11 @@ CARD_SPECS = [
     {"id": "me1-8", "name": "Chikorita", "type": "Grass", "stage": "Basic", "hp": "70", "attacks": [("Razor Leaf", "20")], "bg": (22, 101, 52), "accent": (134, 239, 172), "regulation": "I"},
     {"id": "me1-9", "name": "Bayleef", "type": "Grass", "stage": "Stage 1", "hp": "110", "attacks": [("Push Down", "50 (Switch opponent active)")], "bg": (20, 83, 45), "accent": (74, 222, 128), "regulation": "I"},
     {"id": "me1-10", "name": "Meganium", "type": "Grass", "stage": "Stage 2", "hp": "160", "ability": "Wild Growth: Basic Grass Energy = 2 Grass", "attacks": [("Solar Beam", "140")], "bg": (15, 65, 35), "accent": (34, 197, 94), "regulation": "I"},
-    {"id": "me1-117", "name": "Forest of Vitality", "type": "Grass", "stage": "Stadium", "ability": "Hutan Vitalis: Grass Pokémon can evolve immediately", "attacks": [("Instant Evolution", "Evolusi Pokemon Daun di giliran dimainkan")], "bg": (20, 83, 45), "accent": (74, 222, 128), "regulation": "I"}
+    {"id": "me1-117", "name": "Forest of Vitality", "type": "Grass", "stage": "Stadium", "ability": "Hutan Vitalis: Grass Pokémon can evolve immediately", "attacks": [("Instant Evolution", "Evolusi Pokemon Daun di giliran dimainkan")], "bg": (20, 83, 45), "accent": (74, 222, 128), "regulation": "I"},
+
+    # Energy Switch & Bug Catching Set
+    {"id": "me1-115", "name": "Energy Switch", "type": "Colorless", "stage": "Item", "ability": "Pindahkan Basic Energy antar Pokémon sendiri", "attacks": [("Move Energy", "Pindahkan 1 Energy ke Pokemon lain")], "bg": (30, 41, 59), "accent": (56, 189, 248), "regulation": "I"},
+    {"id": "sv6-143", "name": "Bug Catching Set", "type": "Grass", "stage": "Item", "ability": "Top 7 dek -> ambil hingga 2 Daun/Energi", "attacks": [("Jaring Penangkap", "Ambil 2 kombinasi Pokemon/Energi Daun")], "bg": (20, 83, 45), "accent": (74, 222, 128), "regulation": "H"}
 ]
 
 def render_card(spec):

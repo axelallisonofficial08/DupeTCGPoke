@@ -61,9 +61,9 @@
       'sve-7':17
     },
     exeggutor:{
-      'sv8-1':4,'30c-2':4,'me1-8':2,'me1-9':1,'me1-10':2,'sv6-25':3,'sv6pt5-38':1,
-      'me1-117':3,'me1-131':4,'me2pt5-198':4,'me1-119':4,'me1-114':3,'me3-76':2,'me1-130':2,
-      'me4-108':2,'me2pt5-196':2,'sv5-152':1,'zsv10pt5-79':1,'sve-1':15
+      'sv8-1':3,'30c-2':3,'me1-8':2,'me1-9':2,'me1-10':2,'sv6-25':3,'sv6pt5-38':1,
+      'me1-117':3,'me1-115':3,'sv6-143':4,'me2pt5-198':4,'me1-131':4,'me1-119':4,'me1-114':3,'me3-76':2,'me1-130':2,
+      'me4-108':2,'me2pt5-196':2,'sv5-152':1,'sve-1':10
     }
   };
 
@@ -146,7 +146,7 @@
       types:['Grass'],
       icon:'🌴',
       preferredActive:'30c-2',
-      description:'Hutan Vitalis (Forest of Vitality) memungkinkan evolusi instan Pokémon Daun pada giliran dimainkan! Didukung Wild Growth Meganium yang mendobel energi daun untuk memicu Scale Up 400 HP dan Myriad Leaf Shower raksasa.'
+      description:'Hutan Vitalis memungkinkan evolusi instan, Bug Catching Set menarik Pokémon & Energi Daun, dan Energy Switch memindahkan energi untuk Scale Up 400 HP Meganium Wild Growth!'
     }
   };
 
@@ -440,6 +440,35 @@
       else if(id==='me3-108'){const selected=p.discard.filter(x=>basicEnergy(this.card(x))).slice(0,5);for(const x of selected){p.discard.splice(p.discard.indexOf(x),1);p.deck.push(x);}shuffle(p.deck,this.random);if(selected.length)this.print(p.name+' memasukkan '+selected.length+' Energy ke dek.');}
       else if(id==='me1-130')this.gust(p,options.benchIndex??0);
       else if(id==='me1-114')this.gust(this.bot,options.benchIndex??0);
+      else if(id==='me1-115'){
+        const fromUnit=options.fromRef!==undefined?this.unitAt(p,options.fromRef):this.allRefs(p).map(x=>x.unit).find(u=>u!==p.active&&u.energy.length>0)||p.bench.find(b=>b.energy.length>0);
+        const toUnit=options.toRef!==undefined?this.unitAt(p,options.toRef):p.active;
+        if(fromUnit&&toUnit&&fromUnit!==toUnit&&fromUnit.energy.length){
+          const e=options.energyUid?fromUnit.energy.find(x=>x.uid===options.energyUid):fromUnit.energy.pop();
+          if(options.energyUid)fromUnit.energy.splice(fromUnit.energy.indexOf(e),1);
+          toUnit.energy.push(e);
+          this.print(p.name+' menggunakan Energy Switch: memindahkan '+this.name(e)+' dari '+this.top(fromUnit).name+' ke '+this.top(toUnit).name+'.');
+          this.recordAction(p,'card','Energy Switch','Pindahkan '+this.name(e)+' ke '+this.top(toUnit).name,{cardId:id,subtype:'Item'});
+        }
+      }
+      else if(id==='sv6-143'){
+        const top7=p.deck.slice(-7).reverse();
+        const eligible=top7.filter(x=>(this.card(x).supertype==='Pokémon'&&this.card(x).types?.includes('Grass'))||x.id==='sve-1');
+        const chosenUids=options.chosen||[];
+        const chosenCards=[];
+        for(const uid of chosenUids){
+          const found=eligible.find(x=>x.uid===uid&&!chosenCards.includes(x));
+          if(found&&chosenCards.length<2)chosenCards.push(found);
+        }
+        if(!chosenCards.length)chosenCards.push(...eligible.slice(0,2));
+        for(const card of chosenCards){
+          p.deck.splice(p.deck.indexOf(card),1);
+          p.hand.push(card);
+        }
+        shuffle(p.deck,this.random);
+        this.print(p.name+' menggunakan Bug Catching Set: mengambil '+(chosenCards.length?chosenCards.map(c=>this.name(c)).join(', '):'0 kartu')+'.');
+        this.recordAction(p,'card','Bug Catching Set','Mengambil '+chosenCards.length+' kartu Daun/Energi',{cardId:id,subtype:'Item'});
+      }
       else if(id==='me1-125'){const pair=this.rareCandyOptions(p).find(x=>x.ref===options.ref&&x.card.uid===options.evolutionUid)||this.rareCandyOptions(p)[0];if(pair){const u=this.unitAt(p,pair.ref);u.stack.push(this.takeHand(p,pair.card.uid));u.evolvedTurn=p.turns;u.poisoned=false;u.paralyzed=false;u.attackLocks={};u.abilityUsedTurn=-1;this.print('Rare Candy: '+this.top(u).name+' berevolusi.');this.recordAction(p,'card',this.name(pair.card),'Evolusi via Rare Candy',{cardId:pair.card.id,subtype:'Evolution'});}}
       else if(id==='me1-119'){p.deck.push(...p.hand.splice(0));shuffle(p.deck,this.random);this.draw(p,p.prize.length===6?8:6);}
       else if(id==='me3-76'){for(const player of this.players){player.deck.push(...player.hand.splice(0));shuffle(player.deck,this.random);this.draw(player,4);}}
@@ -778,7 +807,21 @@
         this.print('CPU memainkan Precious Trolley.');
       }
       
-      // 3. Search Items (Ultra Ball, Poké Pad)
+      // 3. Search Items (Bug Catching Set, Poké Pad, Ultra Ball)
+      const bugNet=p.hand.find(c=>c.id==='sv6-143');
+      if(bugNet){
+        p.discard.push(this.takeHand(p,bugNet.uid));
+        const top7=p.deck.slice(-7).reverse();
+        const eligible=top7.filter(x=>(this.card(x).supertype==='Pokémon'&&this.card(x).types?.includes('Grass'))||x.id==='sve-1');
+        const chosenCards=eligible.slice(0,2);
+        for(const card of chosenCards){
+          p.deck.splice(p.deck.indexOf(card),1);
+          p.hand.push(card);
+        }
+        shuffle(p.deck,this.random);
+        this.print('CPU memakai Bug Catching Set: mengambil '+(chosenCards.length?chosenCards.map(c=>this.name(c)).join(', '):'0 kartu')+'.');
+        this.recordAction(p,'card','Bug Catching Set','Mencari kartu Daun',{cardId:bugNet.id,subtype:'Item'});
+      }
       for(const id of ['me2pt5-198','me1-131']){
         const item=p.hand.find(x=>x.id===id);
         if(!item)continue;
@@ -853,6 +896,19 @@
           p.energyUsed=true;
           this.print('CPU memasang '+this.name(energyCard)+'.');
           this.recordAction(p,'card',this.name(energyCard),'Dipasang ke '+this.top(target).name,{cardId:energyCard.id,subtype:'Energy'});
+        }
+      }
+
+      // 7.5 Energy Switch
+      const eSwitch=p.hand.find(c=>c.id==='me1-115');
+      if(eSwitch&&p.active&&p.bench.length){
+        const benchWithE=p.bench.find(b=>b.energy.length>0);
+        if(benchWithE&&p.active.energy.length<3){
+          p.discard.push(this.takeHand(p,eSwitch.uid));
+          const moved=benchWithE.energy.pop();
+          p.active.energy.push(moved);
+          this.print('CPU menggunakan Energy Switch memindahkan '+this.name(moved)+' ke '+this.top(p.active).name+'.');
+          this.recordAction(p,'card','Energy Switch','Pindah Energy ke '+this.top(p.active).name,{cardId:eSwitch.id,subtype:'Item'});
         }
       }
 
