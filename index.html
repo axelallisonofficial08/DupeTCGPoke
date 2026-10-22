@@ -230,16 +230,26 @@
     </div>
   </div>
   <script src="paho-mqtt.min.js"></script>
-  <script src="traffic-presence.js?v=20261022l"></script>
-  <script src="tcg-data.js?v=20261022l"></script>
-  <script src="mega-engine.js?v=20261022l"></script>
-  <script src="pro-ai.js?v=20261022l"></script>
-  <script src="lucario-ai.js?v=20261022l"></script>
-  <script src="dragapult-ai.js?v=20261022l"></script>
-  <script src="app.js?v=20261022l"></script>
+  <script src="traffic-presence.js?v=20261022m"></script>
+  <script src="tcg-data.js?v=20261022m"></script>
+  <script src="mega-engine.js?v=20261022m"></script>
+  <script src="pro-ai.js?v=20261022m"></script>
+  <script src="lucario-ai.js?v=20261022m"></script>
+  <script src="dragapult-ai.js?v=20261022m"></script>
+  <script src="app.js?v=20261022m"></script>
   <script>
+    const APP_CACHE_TARGET = 'v32_20261022';
+    if (localStorage.getItem('ptcg_cache_ver') !== APP_CACHE_TARGET) {
+      if ('caches' in window) {
+        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {
+          localStorage.setItem('ptcg_cache_ver', APP_CACHE_TARGET);
+        });
+      } else {
+        localStorage.setItem('ptcg_cache_ver', APP_CACHE_TARGET);
+      }
+    }
     if('serviceWorker' in navigator){
-      navigator.serviceWorker.register('./service-worker.js?v=20261022l').then(reg => {
+      navigator.serviceWorker.register('./service-worker.js?v=20261022m').then(reg => {
         reg.update();
       }).catch(console.warn);
       let refreshing = false;

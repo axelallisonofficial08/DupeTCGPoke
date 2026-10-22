@@ -12,6 +12,12 @@
   const refName=(player,ref)=>game.top(game.unitAt(player,ref)).name+(ref==='active'?' · Active':' · Bench '+(ref+1));
   const cardName=instance=>game.card(instance).name;
 
+  const CARD_IMG_VER = '?v=20261022_v32';
+  function cardImgUrl(cardId) {
+    if (!cardId) return '';
+    return 'assets/cards/' + cardId + '.png' + CARD_IMG_VER;
+  }
+
   function makeCard(instance,unit=null,kind='') {
     const printed=game.card(instance);
     const button=document.createElement('button');
@@ -19,7 +25,7 @@
     button.setAttribute('aria-label',printed.name+(unit?' · '+game.remaining(unit)+' HP tersisa':''));
     button.title=printed.name;
     const image=document.createElement('img');
-    image.src='assets/cards/'+instance.id+'.png';image.alt=printed.name;image.draggable=false;
+    image.src=cardImgUrl(instance.id);image.alt=printed.name;image.draggable=false;
     image.onerror=()=>{if(printed.images?.small||printed.images?.large)image.src=printed.images.small||printed.images.large;};
     button.append(image);
     if(unit){
@@ -149,7 +155,7 @@
     const visualCol=document.createElement('div');
     visualCol.className='card-detail-visual';
     const img=document.createElement('img');
-    img.src='assets/cards/'+card.id+'.png';
+    img.src=cardImgUrl(card.id);
     img.alt=card.name;
     img.className='card-detail-img';
     img.onerror=()=>{if(card.images?.large||card.images?.small)img.src=card.images.large||card.images.small;};
@@ -290,7 +296,7 @@
       const row=document.createElement('div');row.className='history-item history-type-'+item.type;
       const thumb=document.createElement('div');thumb.className='history-item-thumb';
       if(item.cardId&&game.cards[item.cardId]){
-        const img=document.createElement('img');img.src='assets/cards/'+item.cardId+'.png';img.alt=item.title;img.loading='lazy';
+        const img=document.createElement('img');img.src=cardImgUrl(item.cardId);img.alt=item.title;img.loading='lazy';
         thumb.title='Lihat kartu: '+item.title;thumb.style.cursor='pointer';thumb.onclick=()=>showCardDetailsById(item.cardId);
         thumb.append(img);
       }else{
@@ -587,7 +593,7 @@
     const thumbBox=document.createElement('div');
     thumbBox.style.cssText='display:flex;gap:12px;align-items:center;margin-bottom:10px;background:#101a26;padding:8px;border-radius:8px;border:1px solid #28415a;';
     const pkmnImg=document.createElement('img');
-    pkmnImg.src='assets/cards/'+card.id+'.png';
+    pkmnImg.src=cardImgUrl(card.id);
     pkmnImg.alt=card.name;
     pkmnImg.style.cssText='width:56px;height:auto;border-radius:4px;border:1px solid #38bdf8;cursor:pointer;flex:none;';
     pkmnImg.title='Klik untuk melihat kartu ukuran penuh';
@@ -671,7 +677,7 @@
         pill.style.cursor='pointer';
         const eThumb=document.createElement('img');
         eThumb.className='energy-pill-thumb';
-        eThumb.src='assets/cards/'+e.id+'.png';
+        eThumb.src=cardImgUrl(e.id);
         eThumb.alt=eCard.name;
         eThumb.onerror=()=>{if(eCard.images?.small||eCard.images?.large)eThumb.src=eCard.images.small||eCard.images.large;};
         const eSym=eType==='Grass'?'🌿':eType==='Fire'?'🔥':eType==='Water'?'💧':eType==='Lightning'?'⚡':eType==='Psychic'?'🔮':eType==='Fighting'?'🥊':eType==='Darkness'?'🌑':eType==='Metal'?'⚙️':eType==='Rocket'?'🚀':'⚡';
@@ -815,7 +821,7 @@
           // Thumb
           const thumb=document.createElement('div');thumb.className='trash-card-thumb';
           thumb.title='Lihat detail kartu: '+card.name;
-          const img=document.createElement('img');img.src='assets/cards/'+card.id+'.png';img.alt=card.name;
+          const img=document.createElement('img');img.src=cardImgUrl(card.id);img.alt=card.name;
           thumb.append(img);
           if(count>1){
             const cnt=document.createElement('span');cnt.className='trash-card-count';
@@ -1143,7 +1149,7 @@
 
       const thumb = document.createElement('img');
       thumb.className = 'deck-thumb';
-      thumb.src = 'assets/cards/' + (deck.preferredActive || 'me2pt5-126') + '.png';
+      thumb.src = cardImgUrl(deck.preferredActive || 'me2pt5-126');
       thumb.alt = deck.name;
       thumb.loading = 'lazy';
 
@@ -1207,7 +1213,7 @@
 
           const cardImg = document.createElement('img');
           cardImg.className = 'drawer-card-img';
-          cardImg.src = 'assets/cards/' + id + '.png';
+          cardImg.src = cardImgUrl(id);
           cardImg.alt = card.name;
           cardImg.loading = 'lazy';
           cardImg.onerror = () => {
