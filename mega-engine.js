@@ -61,9 +61,9 @@
       'sve-7':17
     },
     exeggutor:{
-      'sv8-1':4,'30c-2':4,'sv6-25':3,'sv8pt5-4':2,'sv6pt5-38':1,
-      'me1-131':4,'me2pt5-198':4,'me1-119':4,'me1-114':3,'me3-76':2,'me1-130':3,
-      'me4-108':2,'me2pt5-196':2,'sv5-152':1,'zsv10pt5-79':2,'sve-1':19
+      'sv8-1':4,'30c-2':3,'me1-8':2,'me1-9':1,'me1-10':2,'sv6-25':3,'sv6pt5-38':1,
+      'me1-125':2,'me1-131':4,'me2pt5-198':3,'me1-119':4,'me1-114':3,'me3-76':2,'me1-130':2,
+      'me4-108':2,'me2pt5-196':2,'sv5-152':1,'zsv10pt5-79':2,'sve-1':17
     }
   };
 
@@ -142,11 +142,11 @@
     },
     exeggutor:{
       id:'exeggutor',
-      name:'Alolan Exeggutor / Ogerpon ex',
+      name:'Alolan Exeggutor / Meganium',
       types:['Grass'],
       icon:'🌴',
       preferredActive:'30c-2',
-      description:'Scale Up menambah +250 HP saat memiliki 6 Grass Energy (total 400 HP + Hero\'s Cape 500 HP), didukung Teal Dance Ogerpon dan Itchy Pollen Budew.'
+      description:'Wild Growth Meganium mendobel setiap Basic Grass Energy menjadi 2 Grass, memicu Scale Up Alolan Exeggutor (+250 HP, total 400 HP / 500 HP Hero\'s Cape) dan melipatgandakan Myriad Leaf Shower Ogerpon ex!'
     }
   };
 
@@ -197,12 +197,41 @@
     unitAt(p,ref){return ref==='active'?p.active:p.bench[ref];}allRefs(p){return[{ref:'active',unit:p.active},...p.bench.map((unit,ref)=>({ref,unit}))].filter(x=>x.unit);}
     handCard(p,uid){return p.hand.find(c=>c.uid===uid);}takeHand(p,uid){const i=p.hand.findIndex(c=>c.uid===uid);return i<0?null:p.hand.splice(i,1)[0];}
     fail(error){return{ok:false,error};}ok(){return{ok:true};}canAct(){return!this.over&&this.turn===0&&this.pendingPromotion===null;}
+    ownerOf(unit){
+      if(!this.players) return null;
+      for(const p of this.players){
+        if(p.active === unit || p.bench?.includes(unit)) return p;
+      }
+      return null;
+    }
+    hasMeganium(p){
+      if(!p) return false;
+      return (p.active && this.top(p.active).name === 'Meganium') ||
+             (p.bench && p.bench.some(b => this.top(b).name === 'Meganium'));
+    }
+    totalEnergyValue(unit){
+      if(!unit||!unit.energy)return 0;
+      const owner=this.ownerOf(unit);
+      const dbl=owner?this.hasMeganium(owner):false;
+      let total=0;
+      for(const e of unit.energy){
+        if(this.energyType(e)==='Grass'&&dbl)total+=2;
+        else if(e.id==='sv10-182')total+=2;
+        else total+=1;
+      }
+      return total;
+    }
     hp(unit){
       let val = Number(this.top(unit).hp);
       if(this.stadium?.id==='sv8-177'&&this.top(unit).subtypes?.includes('Stage 2')) val -= 30;
       if(unit.tool?.id==='sv5-152') val += 100;
       if(this.top(unit).name==='Alolan Exeggutor'){
-        const grassCount = unit.energy.filter(e => this.energyType(e)==='Grass').length;
+        const owner = this.ownerOf(unit);
+        const doubleGrass = owner ? this.hasMeganium(owner) : false;
+        let grassCount = 0;
+        for(const e of unit.energy){
+          if(this.energyType(e)==='Grass') grassCount += (doubleGrass ? 2 : 1);
+        }
         if(grassCount >= 6) val += 250;
       }
       return val;
@@ -222,9 +251,12 @@
       return this.name(instance).replace(/^Basic /,'').replace(/ Energy$/,'');
     }
     hasCost(unit,cost){
+      const owner = this.ownerOf(unit);
+      const doubleGrass = owner ? this.hasMeganium(owner) : false;
       let units=[];
       for(const e of unit.energy){
         if(e.id==='sv10-182')units.push('Darkness/Psychic','Darkness/Psychic');
+        else if(this.energyType(e)==='Grass' && doubleGrass) units.push('Grass','Grass');
         else units.push(this.energyType(e));
       }
       if(units.length<cost.length)return false;
@@ -361,8 +393,29 @@
       }
       return this.ok();
     }
-    canRetreat(p=this.me){const u=p.active;return!!u&&!p.retreated&&!u.paralyzed&&p.bench.length>0&&u.energy.length>=this.retreatCost(u);}
-    retreat(index){if(!this.canAct()||!this.canRetreat(this.me))return this.fail('Belum dapat mundur.');const p=this.me;if(!p.bench[index])return this.fail('Pilih pengganti Bench.');const old=p.active;for(let i=0;i<this.retreatCost(old);i++)p.discard.push(old.energy.pop());old.poisoned=false;old.paralyzed=false;p.active=p.bench.splice(index,1)[0];p.bench.push(old);p.retreated=true;this.print('Kamu mundur ke '+this.top(p.active).name+'.');return this.ok();}
+    canRetreat(p=this.me){const u=p.active;return!!u&&!p.retreated&&!u.paralyzed&&p.bench.length>0&&this.totalEnergyValue(u)>=this.retreatCost(u);}
+    retreat(index){
+      if(!this.canAct()||!this.canRetreat(this.me))return this.fail('Belum dapat mundur.');
+      const p=this.me;
+      if(!p.bench[index])return this.fail('Pilih pengganti Bench.');
+      const old=p.active;
+      let needed=this.retreatCost(old);
+      const owner=this.ownerOf(old);
+      const dbl=owner?this.hasMeganium(owner):false;
+      while(needed>0&&old.energy.length){
+        const e=old.energy.pop();
+        p.discard.push(e);
+        const val=(this.energyType(e)==='Grass'&&dbl)?2:(e.id==='sv10-182'?2:1);
+        needed-=val;
+      }
+      old.poisoned=false;
+      old.paralyzed=false;
+      p.active=p.bench.splice(index,1)[0];
+      p.bench.push(old);
+      p.retreated=true;
+      this.print('Kamu mundur ke '+this.top(p.active).name+'.');
+      return this.ok();
+    }
     gust(p,index){if(!p.bench[index])return false;const old=p.active;p.active=p.bench.splice(index,1)[0];p.bench.push(old);this.print(p.name+' mengganti Active ke '+this.top(p.active).name+'.');return true;}
     search(p,predicate,n=1,chosen=[]){const selected=[];for(const uid of chosen){const c=p.deck.find(x=>x.uid===uid&&predicate(x));if(c&&!selected.includes(c)&&selected.length<n)selected.push(c);}if(!chosen.length)selected.push(...p.deck.filter(predicate).slice(0,n));for(const c of selected){p.deck.splice(p.deck.indexOf(c),1);p.hand.push(c);}shuffle(p.deck,this.random);if(selected.length)this.print(p.name+' mengambil '+selected.map(c=>this.name(c)).join(', ')+' dari dek.');return selected.length;}
     recover(p,predicate,n=1,chosen=[]){const selected=[];for(const uid of chosen){const c=p.discard.find(x=>x.uid===uid&&predicate(x));if(c&&!selected.includes(c)&&selected.length<n)selected.push(c);}if(!chosen.length)selected.push(...p.discard.filter(predicate).slice(0,n));for(const c of selected){p.discard.splice(p.discard.indexOf(c),1);p.hand.push(c);}if(selected.length)this.print(p.name+' mengambil '+selected.map(c=>this.name(c)).join(', ')+' dari discard.');return selected.length;}
@@ -437,6 +490,7 @@
             if(this.top(unit).name==="Team Rocket's Porygon"&&card.name==="Team Rocket's Porygon-Z")result.push({ref,card:c});
             if(this.top(unit).name==='Ralts'&&card.name==='Gardevoir ex')result.push({ref,card:c});
             if((this.top(unit).name==='Impidimp'||this.top(unit).name==="Marnie's Impidimp")&&card.name.includes('Grimmsnarl'))result.push({ref,card:c});
+            if(this.top(unit).name==='Chikorita'&&card.name==='Meganium')result.push({ref,card:c});
           }
         }
       }
@@ -587,6 +641,32 @@
         const heal = Math.min(u.damage, 50);
         u.damage -= heal;
         if(heal > 0) this.print('Mega Drain menyembuhkan '+heal+' damage pada '+source.name+'.');
+      }
+      if(move.name==='Push Down'){
+        damage=50;
+        if(op.bench.length){
+          const nextActive=op.bench.shift();
+          op.bench.push(op.active);
+          op.active=nextActive;
+          this.print('Push Down: Pokémon Active lawan terdorong ke Bench, digantikan oleh '+this.top(op.active).name+'.');
+        }
+      }
+      if(move.name==='Myriad Leaf Shower'){
+        const countEnergy=(pkmnUnit)=>{
+          if(!pkmnUnit||!pkmnUnit.energy)return 0;
+          const owner=this.ownerOf(pkmnUnit);
+          const dbl=owner?this.hasMeganium(owner):false;
+          let count=0;
+          for(const e of pkmnUnit.energy){
+            if(this.energyType(e)==='Grass'&&dbl)count+=2;
+            else if(e.id==='sv10-182')count+=2;
+            else count+=1;
+          }
+          return count;
+        };
+        const totalE=countEnergy(u)+countEnergy(defender);
+        damage=30+30*totalE;
+        this.print('Myriad Leaf Shower: Total '+totalE+' Energy terpasang ('+damage+' damage).');
       }
       if(move.name==='Itchy Pollen'){
         damage=10;
