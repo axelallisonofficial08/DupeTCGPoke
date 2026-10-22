@@ -210,5 +210,76 @@
   .card-detail-layout{grid-template-columns:1fr;gap:10px}
   .card-detail-visual{display:flex;justify-content:center}
   .card-detail-img{max-width:180px}
+  .traffic-btn{padding:5px 8px;font-size:11px}
+  .traffic-btn-text{display:none}
+  .traffic-stats-row{grid-template-columns:1fr;gap:6px}
 }
 
+/* Traffic & Presence Styles */
+.traffic-btn{display:inline-flex;align-items:center;gap:7px;background:#0f2438;border:1px solid #10b981;border-radius:8px;color:#e2e8f0;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;transition:all .18s ease;box-shadow:0 0 10px rgba(16,185,129,0.15)}
+.traffic-btn:hover{background:#143552;border-color:#34d399;color:#fff;box-shadow:0 0 14px rgba(16,185,129,0.35)}
+.traffic-indicator-dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;animation:trafficPulse 2s infinite ease-in-out}
+@keyframes trafficPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.35)}}
+.traffic-badge{background:#064e3b;border:1px solid #059669;color:#6ee7b7;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px}
+
+.traffic-dialog{max-width:680px;width:94%;max-height:88vh;display:flex;flex-direction:column;padding:18px;background:#0f1c2c;border:1px solid #233b54;border-radius:14px;box-shadow:0 20px 45px rgba(0,0,0,0.7)}
+.traffic-modal-header{border-bottom:1px solid #1f364e;padding-bottom:12px;margin-bottom:12px}
+.traffic-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.traffic-title-row h2{margin:0;font-size:18px;color:#f1f5f9;display:flex;align-items:center;gap:8px}
+.traffic-conn-status{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+.traffic-conn-status.live{background:#064e3b;color:#6ee7b7;border:1px solid #059669}
+.traffic-conn-status.local{background:#78350f;color:#fde68a;border:1px solid #d97706}
+.traffic-modal-desc{margin:0 0 10px;font-size:12px;color:#94a3b8;line-height:1.4}
+.traffic-tabs{display:flex;gap:8px;margin-top:6px}
+.traffic-tab-btn{flex:1;padding:8px 12px;background:#142436;border:1px solid #243c55;border-radius:8px;color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+.traffic-tab-btn:hover{color:#f8fafc;background:#1b3149}
+.traffic-tab-btn.active{background:#1e3a5f;border-color:#38bdf8;color:#fff;box-shadow:0 0 10px rgba(56,189,248,0.25)}
+
+.traffic-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.traffic-stat-card{background:#142436;border:1px solid #223c58;border-radius:10px;padding:8px;text-align:center}
+.traffic-stat-card .stat-num{font-size:22px;font-weight:900;color:#38bdf8;line-height:1.1}
+.traffic-stat-card .stat-label{font-size:11px;color:#94a3b8;margin-top:4px;font-weight:600}
+
+.traffic-nickname-box{background:#122234;border:1px solid #25405e;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.traffic-nickname-box label{display:block;font-size:12px;color:#cbd5e1;margin-bottom:6px}
+.nickname-input-group{display:flex;gap:8px}
+.nickname-input-group input{flex:1;background:#091422;border:1px solid #334d6b;border-radius:6px;color:#f8fafc;padding:6px 10px;font-size:13px;font-weight:700}
+.nickname-input-group input:focus{outline:none;border-color:#38bdf8;box-shadow:0 0 0 2px rgba(56,189,248,0.2)}
+.nickname-save-btn{background:#0284c7;border:1px solid #38bdf8;color:#fff;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s}
+.nickname-save-btn:hover{background:#0369a1}
+.nickname-hint{display:block;margin-top:5px;font-size:11px;color:#64748b}
+
+.traffic-list-header{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800;color:#cbd5e1;margin-bottom:8px}
+.traffic-refresh-btn{background:#1b2f46;border:1px solid #315174;color:#93c5fd;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer}
+.traffic-refresh-btn:hover{background:#254366;color:#fff}
+.traffic-users-list{display:flex;flex-direction:column;gap:8px;max-height:240px;overflow-y:auto;padding-right:4px}
+.traffic-user-item{display:flex;align-items:center;gap:10px;background:#132235;border:1px solid #213852;border-radius:10px;padding:8px 10px;transition:all .15s}
+.traffic-user-item:hover{border-color:#3b82f6;background:#16283e}
+.traffic-user-item.is-you{border-color:#10b981;background:#0f2738}
+.user-avatar-wrap{position:relative;width:36px;height:36px;background:#1e334d;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex:none}
+.user-status-dot.online{position:absolute;bottom:0;right:0;width:9px;height:9px;border-radius:50%;background:#10b981;border:2px solid #0f2738}
+.user-main-info{flex:1;min-width:0}
+.user-headline{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px}
+.user-name{font-size:13px;color:#f1f5f9}
+.badge-you{background:#047857;color:#a7f3d0;font-size:9px;font-weight:800;padding:1px 5px;border-radius:4px;letter-spacing:.05em}
+.user-device-tag{font-size:10px;background:#1b2f48;color:#94a3b8;padding:1px 6px;border-radius:4px}
+.user-subline{display:flex;align-items:center;gap:6px;font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-action{color:#fde047;font-weight:600}
+.user-dot-sep{color:#475569}
+.user-time{color:#64748b}
+.user-pill-status{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#34d399;padding:2px 7px;background:#064e3b;border-radius:12px;flex:none}
+
+.traffic-gh-card{background:#132235;border:1px solid #233c57;border-radius:10px;padding:14px}
+.traffic-gh-card h3{margin:0 0 8px;font-size:14px;color:#facc15}
+.traffic-gh-card p,.traffic-gh-card li{font-size:12px;color:#cbd5e1;line-height:1.5}
+.traffic-gh-card ul{margin:6px 0 12px;padding-left:18px}
+.traffic-gh-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.gh-link-btn{display:inline-flex;align-items:center;padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;cursor:pointer;transition:all .15s}
+.gh-link-btn.primary{background:#2563eb;color:#fff;border:1px solid #60a5fa}
+.gh-link-btn.primary:hover{background:#1d4ed8}
+.gh-link-btn.secondary{background:#1e293b;color:#cbd5e1;border:1px solid #475569}
+.gh-link-btn.secondary:hover{background:#334155;color:#fff}
+
+.traffic-modal-footer{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #1f364e;padding-top:10px;margin-top:12px}
+.traffic-live-indicator{font-size:11px;color:#10b981;display:flex;align-items:center;gap:6px}
+.pulse-indicator{width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981}

@@ -988,6 +988,9 @@
     if(pQuick && pQuick.value !== game.roles[0]) pQuick.value = game.roles[0];
     const cQuick = $('cpuQuickSelect');
     if(cQuick && cQuick.value !== game.roles[1]) cQuick.value = game.roles[1];
+    if(window.TrafficPresence){
+      window.TrafficPresence.setAction('Bermain: ' + pInfo.name + ' vs ' + cInfo.name);
+    }
   }
 
   function initQuickMatchupBar(){
@@ -1222,12 +1225,15 @@
       const eSec = renderDrawerCategory('⚡ Energy', energyList);
       if(eSec) drawer.append(eSec);
 
-      expandBtn.onclick = e => {
+        expandBtn.onclick = e => {
         e.stopPropagation();
         const isHidden = drawer.hidden;
         drawer.hidden = !isHidden;
         expandBtn.classList.toggle('expanded', isHidden);
         expandBtn.innerHTML = isHidden ? '▲ <span>Tutup</span>' : '👁️ <span>Lihat Kartu</span>';
+        if(window.TrafficPresence && isHidden){
+          window.TrafficPresence.setAction('Melihat Kartu: ' + (deck.name || key));
+        }
       };
 
       opt.append(mainRow, drawer);
@@ -1274,6 +1280,11 @@
         render();
         const modal = $('deckModal');
         if(modal) modal.hidden = true;
+        if(window.TrafficPresence){
+          const pName = PTCGEngine.DECK_INFO[modalPlayerDeck]?.name || modalPlayerDeck;
+          const cName = PTCGEngine.DECK_INFO[modalCpuDeck]?.name || modalCpuDeck;
+          window.TrafficPresence.setAction('Bertarung: ' + pName + ' vs ' + cName);
+        }
       };
     }
 
@@ -1289,6 +1300,100 @@
     setModalTab('player');
     const modal = $('deckModal');
     if(modal) modal.hidden = false;
+    if(window.TrafficPresence) window.TrafficPresence.setAction('Memilih Matchup Deck');
+  }
+
+  function setupTrafficModal(){
+    const trafficBtn = $('trafficBtn');
+    const modal = $('trafficModal');
+    const closeBtn = $('trafficModalClose');
+    const tabLive = $('tabTrafficLive');
+    const tabGh = $('tabTrafficGithub');
+    const contentLive = $('trafficContentLive');
+    const contentGh = $('trafficContentGithub');
+    const nickInput = $('trafficNicknameInput');
+    const saveNickBtn = $('saveNicknameBtn');
+    const refreshBtn = $('refreshTrafficBtn');
+
+    function openModal(){
+      if(!modal) return;
+      modal.hidden = false;
+      if(window.TrafficPresence){
+        if(nickInput) nickInput.value = window.TrafficPresence.myNickname || '';
+        window.TrafficPresence._updateUI();
+        window.TrafficPresence._sendHeartbeat();
+      }
+    }
+
+    function closeModal(){
+      if(modal) modal.hidden = true;
+    }
+
+    if(trafficBtn) trafficBtn.onclick = openModal;
+    if(closeBtn) closeBtn.onclick = closeModal;
+
+    if(modal){
+      modal.onclick = (e) => {
+        if(e.target === modal) closeModal();
+      };
+    }
+
+    if(tabLive && tabGh){
+      tabLive.onclick = () => {
+        tabLive.classList.add('active');
+        tabLive.setAttribute('aria-selected', 'true');
+        tabGh.classList.remove('active');
+        tabGh.setAttribute('aria-selected', 'false');
+        if(contentLive) contentLive.style.display = 'block';
+        if(contentGh) contentGh.style.display = 'none';
+      };
+      tabGh.onclick = () => {
+        tabGh.classList.add('active');
+        tabGh.setAttribute('aria-selected', 'true');
+        tabLive.classList.remove('active');
+        tabLive.setAttribute('aria-selected', 'false');
+        if(contentLive) contentLive.style.display = 'none';
+        if(contentGh) contentGh.style.display = 'block';
+      };
+    }
+
+    function handleSaveNick(){
+      if(!nickInput || !window.TrafficPresence) return;
+      const val = nickInput.value.trim();
+      if(val){
+        window.TrafficPresence.setNickname(val);
+        if(saveNickBtn){
+          const orig = saveNickBtn.innerHTML;
+          saveNickBtn.innerHTML = '✅ Tersimpan!';
+          saveNickBtn.disabled = true;
+          setTimeout(() => {
+            saveNickBtn.innerHTML = orig;
+            saveNickBtn.disabled = false;
+          }, 1200);
+        }
+      }
+    }
+
+    if(saveNickBtn) saveNickBtn.onclick = handleSaveNick;
+    if(nickInput){
+      nickInput.onkeydown = (e) => {
+        if(e.key === 'Enter') handleSaveNick();
+      };
+    }
+
+    if(refreshBtn){
+      refreshBtn.onclick = () => {
+        if(window.TrafficPresence){
+          window.TrafficPresence._sendHeartbeat();
+          refreshBtn.style.transform = 'rotate(360deg)';
+          refreshBtn.style.transition = 'transform 0.5s ease';
+          setTimeout(() => {
+            refreshBtn.style.transform = 'none';
+            refreshBtn.style.transition = 'none';
+          }, 500);
+        }
+      };
+    }
   }
 
   const deckBtn = $('deckSelectBtn');
@@ -1296,6 +1401,8 @@
 
   initQuickMatchupBar();
   setupDeckModal();
+  setupTrafficModal();
   updateTopbarTitles();
   render();
 })();
+
