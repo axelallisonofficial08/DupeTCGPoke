@@ -230,19 +230,22 @@
     </div>
   </div>
   <script src="paho-mqtt.min.js"></script>
-  <script src="traffic-presence.js?v=20261022j"></script>
-  <script src="tcg-data.js?v=20261022j"></script>
-  <script src="mega-engine.js?v=20261022j"></script>
-  <script src="pro-ai.js?v=20261022j"></script>
-  <script src="lucario-ai.js?v=20261022j"></script>
-  <script src="dragapult-ai.js?v=20261022j"></script>
-  <script src="app.js?v=20261022j"></script>
+  <script src="traffic-presence.js?v=20261022k"></script>
+  <script src="tcg-data.js?v=20261022k"></script>
+  <script src="mega-engine.js?v=20261022k"></script>
+  <script src="pro-ai.js?v=20261022k"></script>
+  <script src="lucario-ai.js?v=20261022k"></script>
+  <script src="dragapult-ai.js?v=20261022k"></script>
+  <script src="app.js?v=20261022k"></script>
   <script>
     if('serviceWorker' in navigator){
-      navigator.serviceWorker.getRegistrations().then(regs => {
-        for(let reg of regs) reg.update();
+      navigator.serviceWorker.register('./service-worker.js?v=20261022k').then(reg => {
+        reg.update();
+      }).catch(console.warn);
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) { refreshing = true; window.location.reload(); }
       });
-      window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js?v=20261022j').catch(console.warn));
     }
   </script>
 </body>
