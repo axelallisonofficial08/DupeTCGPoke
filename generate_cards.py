@@ -53,7 +53,24 @@ CARD_SPECS = [
 
     # Energy Switch & Bug Catching Set
     {"id": "me1-115", "name": "Energy Switch", "type": "Colorless", "stage": "Item", "ability": "Pindahkan Basic Energy antar Pokémon sendiri", "attacks": [("Move Energy", "Pindahkan 1 Energy ke Pokemon lain")], "bg": (30, 41, 59), "accent": (56, 189, 248), "regulation": "I"},
-    {"id": "sv6-143", "name": "Bug Catching Set", "type": "Grass", "stage": "Item", "ability": "Top 7 dek -> ambil hingga 2 Daun/Energi", "attacks": [("Jaring Penangkap", "Ambil 2 kombinasi Pokemon/Energi Daun")], "bg": (20, 83, 45), "accent": (74, 222, 128), "regulation": "H"}
+    {"id": "sv6-143", "name": "Bug Catching Set", "type": "Grass", "stage": "Item", "ability": "Top 7 dek -> ambil hingga 2 Daun/Energi", "attacks": [("Jaring Penangkap", "Ambil 2 kombinasi Pokemon/Energi Daun")], "bg": (20, 83, 45), "accent": (74, 222, 128), "regulation": "H"},
+
+    # Baby Box Cards
+    {"id": "30c-120", "name": "Igglybuff", "type": "Colorless", "stage": "Basic", "hp": "30", "attacks": [("Bouncy Circle", "30x for each Benched Pokemon HP <= 30")], "bg": (219, 39, 119), "accent": (244, 114, 182), "regulation": "J"},
+    {"id": "pbl-5", "name": "Poltchageist", "type": "Grass", "stage": "Basic", "hp": "30", "attacks": [("Spill Powder", "10")], "bg": (20, 83, 45), "accent": (74, 222, 128), "regulation": "J"},
+    {"id": "dri-48", "name": "Misty's Magikarp", "type": "Water", "stage": "Basic", "hp": "30", "ability": "So Submerged: Immune on Bench", "attacks": [("Splash", "10")], "bg": (2, 132, 199), "accent": (56, 189, 248), "regulation": "I"},
+    {"id": "meg-71", "name": "Tyrogue", "type": "Fighting", "stage": "Basic", "hp": "30", "attacks": [("Pow-Pow Punching", "10+ (30x heads until tails)")], "bg": (180, 83, 9), "accent": (245, 158, 11), "regulation": "I"},
+    {"id": "dri-10", "name": "Shaymin", "type": "Grass", "stage": "Basic", "hp": "80", "ability": "Flower Curtain: Protect non-Rule Box Bench", "attacks": [("Smash Kick", "30")], "bg": (22, 101, 52), "accent": (134, 239, 172), "regulation": "I"},
+    {"id": "cri-70", "name": "Patrat", "type": "Colorless", "stage": "Basic", "hp": "70", "ability": "Watchful Eye: Prevent moving damage", "attacks": [("Bite", "10")], "bg": (71, 85, 105), "accent": (148, 163, 184), "regulation": "J"},
+    {"id": "tef-144", "name": "Buddy-Buddy Poffin", "type": "Colorless", "stage": "Item", "ability": "Search 2 Basic Pokemon <=70 HP to Bench", "attacks": [("Poffin Search", "Cari 2 Pokemon Basic <=70 HP")], "bg": (180, 83, 9), "accent": (251, 191, 36), "regulation": "H"},
+    {"id": "wht-80", "name": "Brave Bangle", "type": "Colorless", "stage": "Tool", "ability": "Non-ex does +30 damage to Pokemon ex", "attacks": [("Bangle Power", "+30 damage to Pokemon ex")], "bg": (194, 65, 12), "accent": (251, 146, 60), "regulation": "I"},
+    {"id": "sv1-186", "name": "Pokégear 3.0", "type": "Colorless", "stage": "Item", "ability": "Top 7 deck -> ambil 1 Supporter", "attacks": [("Gear Search", "Ambil 1 Supporter dari 7 kartu")], "bg": (15, 118, 110), "accent": (45, 212, 191), "regulation": "G"},
+    {"id": "tef-155", "name": "Morty's Conviction", "type": "Psychic", "stage": "Supporter", "ability": "Discard 1 card -> draw per opponent benched", "attacks": [("Morty Draw", "Ambil kartu sejumlah bench lawan")], "bg": (88, 28, 135), "accent": (192, 132, 252), "regulation": "H"},
+    {"id": "twm-151", "name": "Hassel", "type": "Fighting", "stage": "Supporter", "ability": "If KO last turn -> look 8 cards, pick 3", "attacks": [("Hassel Guidance", "Pilih 3 dari 8 kartu teratas")], "bg": (120, 53, 15), "accent": (217, 119, 6), "regulation": "H"},
+    {"id": "tef-159", "name": "Rescue Board", "type": "Colorless", "stage": "Tool", "ability": "Retreat -1 (Retreat 0 if HP <= 30)", "attacks": [("Board Retreat", "Retreat gratis jika HP <= 30")], "bg": (2, 132, 199), "accent": (56, 189, 248), "regulation": "H"},
+    {"id": "cri-82", "name": "Special Red Card", "type": "Colorless", "stage": "Item", "ability": "Opponent prizes <=3 -> opponent redraws 3", "attacks": [("Disrupt Hand", "Lawan kocok tangan ke dek, ambil 3")], "bg": (185, 28, 28), "accent": (248, 113, 113), "regulation": "J"},
+    {"id": "tef-161", "name": "Mist Energy", "type": "Colorless", "kind": "Energy", "energy_symbol": "⚪", "ability": "Provides 1 Colorless, block attack effects", "bg": (100, 116, 139), "accent": (203, 213, 225), "regulation": "H"},
+    {"id": "twm-167", "name": "Legacy Energy", "type": "Colorless", "kind": "Energy", "energy_symbol": "🌈", "ability": "ACE SPEC: Provides all types, gives 1 less prize", "bg": (124, 45, 18), "accent": (245, 158, 11), "regulation": "H"}
 ]
 
 def render_card(spec):

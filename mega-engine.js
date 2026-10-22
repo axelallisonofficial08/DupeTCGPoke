@@ -64,6 +64,12 @@
       'sv8-1':3,'30c-2':3,'me1-8':2,'me1-9':2,'me1-10':2,'sv6-25':3,'sv6pt5-38':1,
       'me1-117':3,'me1-115':3,'sv6-143':4,'me2pt5-198':4,'me1-131':4,'me1-119':4,'me1-114':3,'me3-76':2,'me1-130':2,
       'me4-108':2,'me2pt5-196':2,'sv5-152':1,'sve-1':10
+    },
+    babybox:{
+      '30c-120':4,'pbl-5':4,'dri-48':2,'meg-71':1,'sv8pt5-4':1,'dri-10':1,'cri-70':1,
+      'tef-144':4,'wht-80':4,'me2pt5-196':4,'me2pt5-198':4,'sv1-186':4,'me2-85':4,
+      'me1-114':4,'me1-119':4,'tef-155':3,'twm-151':2,'sv9-143':2,'tef-159':2,'cri-82':1,
+      'tef-161':3,'twm-167':1
     }
   };
 
@@ -147,6 +153,14 @@
       icon:'🌴',
       preferredActive:'30c-2',
       description:'Hutan Vitalis memungkinkan evolusi instan, Bug Catching Set menarik Pokémon & Energi Daun, dan Energy Switch memindahkan energi untuk Scale Up 400 HP Meganium Wild Growth!'
+    },
+    babybox:{
+      id:'babybox',
+      name:'Baby Box (Igglybuff)',
+      types:['Colorless'],
+      icon:'🎀',
+      preferredActive:'30c-120',
+      description:'Bouncy Circle meledakkan 150-180 damage tanpa energi berkat bench baby ber-HP 30 (Poltchageist, Misty\'s Magikarp, Tyrogue, Budew), dilindungi Shaymin Flower Curtain dan diperkuat Brave Bangle!'
     }
   };
 
@@ -237,9 +251,20 @@
       return val;
     }
     remaining(unit){return Math.max(0,this.hp(unit)-unit.damage);}
-    retreatCost(unit){let n=this.top(unit).convertedRetreatCost||0;if(unit.tool?.id==='zsv10pt5-79')n=Math.max(0,n-2);if(this.top(unit).name==='Charmander'&&!unit.energy.length)n=0;return n;}
+    retreatCost(unit){
+      let n=this.top(unit).convertedRetreatCost||0;
+      if(unit.tool?.id==='zsv10pt5-79') n=Math.max(0,n-2);
+      if(unit.tool?.id==='tef-159'){
+        if(this.remaining(unit) <= 30) return 0;
+        n=Math.max(0,n-1);
+      }
+      if(this.top(unit).name==='Charmander'&&!unit.energy.length)n=0;
+      return n;
+    }
     energyType(instance){
       if(instance.id==='sv10-182')return 'Rocket';
+      if(instance.id==='twm-167')return 'Rainbow';
+      if(instance.id==='tef-161')return 'Colorless';
       if(instance.id==='me3-87'||instance.id==='sve-6')return 'Fighting';
       if(instance.id==='sve-2')return 'Fire';
       if(instance.id==='sve-5')return 'Psychic';
@@ -483,6 +508,51 @@
       else if(id==='sv10-178')fromDeck(x=>this.isTeamRocketSupporter(x),1);
       else if(id==='sv10-177')fromDeck(x=>this.isBasic(x)&&this.name(x).includes("Team Rocket's"),3);
       else if(id==='sv10-171'){const allTR=this.allRefs(p).every(x=>this.top(x.unit).name.includes("Team Rocket's"));const n=allTR?3:2;fromDeck(x=>this.isBasic(x)&&this.name(x).includes("Team Rocket's"),n);}
+      else if(id==='tef-144'){
+        fromDeck(x=>this.isBasic(x)&&Number(this.card(x).hp)<=70, 2);
+      }
+      else if(id==='sv1-186'){
+        const top7=p.deck.slice(-7).reverse();
+        const supporters=top7.filter(x=>typeOf(this.card(x))==='supporter');
+        const chosen=options.chosen?[options.chosen]:[];
+        const selected=supporters.find(x=>chosen.includes(x.uid))||supporters[0];
+        if(selected){
+          p.deck.splice(p.deck.indexOf(selected),1);
+          p.hand.push(selected);
+          this.print(p.name+' mengambil '+this.name(selected)+' via Pokégear 3.0.');
+        }else{
+          this.print(p.name+' tidak menemukan Supporter via Pokégear 3.0.');
+        }
+        shuffle(p.deck,this.random);
+      }
+      else if(id==='tef-155'){
+        dump(1);
+        const opBenched=this.bot.bench.length;
+        if(opBenched>0) this.draw(p,opBenched);
+        this.print(p.name+" menggunakan Morty's Conviction: membuang 1 kartu dan mengambil "+opBenched+" kartu.");
+      }
+      else if(id==='twm-151'){
+        const top8=p.deck.slice(-8).reverse();
+        const chosenUids=options.chosen||[];
+        const picked=[];
+        for(const uid of chosenUids){
+          const found=top8.find(x=>x.uid===uid&&!picked.includes(x));
+          if(found&&picked.length<3)picked.push(found);
+        }
+        if(!picked.length)picked.push(...top8.slice(0,3));
+        for(const card of picked){
+          p.deck.splice(p.deck.indexOf(card),1);
+          p.hand.push(card);
+        }
+        shuffle(p.deck,this.random);
+        this.print(p.name+' menggunakan Hassel: mengambil '+picked.length+' kartu dari 8 kartu teratas.');
+      }
+      else if(id==='cri-82'){
+        const op=this.bot;
+        op.deck.push(...op.hand.splice(0));
+        this.draw(op,3);
+        this.print(p.name+' memainkan Special Red Card: lawan mengocok kartu tangan ke dek dan mengambil 3 kartu.');
+      }
       else if(id==='sv10-174'){if(p.bench.length)this.gust(p,options.benchIndex??0);if(this.bot.bench.length)this.gust(this.bot,options.opponentBenchIndex??0);}
       else if(id==='sv10-170'){for(const player of this.players){player.deck.push(...player.hand.splice(0));shuffle(player.deck,this.random);}this.draw(p,6);this.draw(this.bot,3);}
       if(this.isTeamRocketSupporter(c))p.abilityFlags['played_tr_supporter_'+p.turns]=true;
@@ -723,6 +793,22 @@
         }
       }
 
+      if(move.name==='Bouncy Circle'){
+        const bench30 = p.bench.filter(b => Number(this.top(b).hp) <= 30).length;
+        damage = 30 * bench30;
+        this.print("Bouncy Circle: "+bench30+" benched Pokémon ber-HP <= 30 ("+damage+" damage).");
+      }
+      if(move.name==='Pow-Pow Punching'){
+        damage = 10;
+        let heads = 0;
+        while(this.random() < 0.5){
+          heads++;
+        }
+        damage += 30 * heads;
+        this.print("Pow-Pow Punching: "+heads+" heads ("+damage+" damage).");
+      }
+
+      if(u.tool?.id==='wht-80'&&!ruleBox(source)&&target.subtypes?.includes('ex')) damage+=30;
       if(p.blackBelt&&target.subtypes?.includes('ex'))damage+=40;
       if(source.types?.includes('Fighting'))damage+=p.bonus;
       if(move.name==='Cosmic Beam'||benchTarget){/* Printed effects bypass Weakness and Resistance. */}
@@ -732,7 +818,12 @@
       if(move.name==='Wild Press')u.damage+=70;if(move.name==='Burning Flare')u.damage+=60;
       this.checkAllKO();if(!this.over)this.endTurn();return this.ok();
     }
-    prizeCount(u){const c=this.top(u);return c.subtypes?.includes('MEGA')?3:c.subtypes?.includes('ex')?2:1;}
+    prizeCount(u){
+      const c=this.top(u);
+      let count = c.subtypes?.includes('MEGA')?3:c.subtypes?.includes('ex')?2:1;
+      if(u.energy?.some(e => e.id === 'twm-167')) count = Math.max(1, count - 1);
+      return count;
+    }
     resolvePlayerKO(loser,winner){
       if(this.over)return;
       for(let i=loser.bench.length-1;i>=0;i--){

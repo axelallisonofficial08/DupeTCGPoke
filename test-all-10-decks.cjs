@@ -23,10 +23,11 @@ const EXPECTED_DECKS = [
   'archaludon',
   'zoroark',
   'grimmsnarl',
-  'exeggutor'
+  'exeggutor',
+  'babybox'
 ];
 
-assert.equal(EXPECTED_DECKS.length, 10, 'Must have 10 decks');
+assert.equal(EXPECTED_DECKS.length, 11, 'Must have 11 decks');
 
 for (const deckKey of EXPECTED_DECKS) {
   assert.ok(DECKS[deckKey], `Deck ${deckKey} must exist in DECKS`);
