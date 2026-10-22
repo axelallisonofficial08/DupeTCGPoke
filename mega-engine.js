@@ -61,9 +61,9 @@
       'sve-7':17
     },
     exeggutor:{
-      'sv8-1':4,'30c-2':3,'me1-8':2,'me1-9':1,'me1-10':2,'sv6-25':3,'sv6pt5-38':1,
-      'me1-125':2,'me1-131':4,'me2pt5-198':3,'me1-119':4,'me1-114':3,'me3-76':2,'me1-130':2,
-      'me4-108':2,'me2pt5-196':2,'sv5-152':1,'zsv10pt5-79':2,'sve-1':17
+      'sv8-1':4,'30c-2':4,'me1-8':2,'me1-9':1,'me1-10':2,'sv6-25':3,'sv6pt5-38':1,
+      'me1-117':3,'me1-131':4,'me2pt5-198':4,'me1-119':4,'me1-114':3,'me3-76':2,'me1-130':2,
+      'me4-108':2,'me2pt5-196':2,'sv5-152':1,'zsv10pt5-79':1,'sve-1':15
     }
   };
 
@@ -146,7 +146,7 @@
       types:['Grass'],
       icon:'🌴',
       preferredActive:'30c-2',
-      description:'Wild Growth Meganium mendobel setiap Basic Grass Energy menjadi 2 Grass, memicu Scale Up Alolan Exeggutor (+250 HP, total 400 HP / 500 HP Hero\'s Cape) dan melipatgandakan Myriad Leaf Shower Ogerpon ex!'
+      description:'Hutan Vitalis (Forest of Vitality) memungkinkan evolusi instan Pokémon Daun pada giliran dimainkan! Didukung Wild Growth Meganium yang mendobel energi daun untuk memicu Scale Up 400 HP dan Myriad Leaf Shower raksasa.'
     }
   };
 
@@ -279,7 +279,12 @@
       return(this.top(u).attacks||[]).map((attack,index)=>({attack,index})).filter(({attack})=>this.hasCost(u,attack.cost||[])&&!(u.attackLocks[attack.name]>=p.turns)&&!(attack.name==='Cosmic Beam'&&!p.bench.some(b=>this.top(b).name==='Lunatone')));
     }
     canAttack(p=this.current){return!this.over&&this.pendingPromotion===null&&!!p.active&&!(p===this.me&&p.turns===1)&&this.validMoves(p).length>0;}
-    canEvolve(p,card,u){if(!card.evolvesFrom||!u||p.turns===1||u.placedTurn>=p.turns||u.evolvedTurn===p.turns)return false;return card.evolvesFrom===this.top(u).name;}
+    canEvolve(p,card,u){
+      if(!card.evolvesFrom||!u||p.turns===1)return false;
+      const isForest = this.stadium?.id==='me1-117' && card.types?.includes('Grass') && this.top(u).types?.includes('Grass');
+      if(!isForest && (u.placedTurn>=p.turns||u.evolvedTurn===p.turns))return false;
+      return card.evolvesFrom===this.top(u).name;
+    }
     isTeamRocketSupporter(c){const printed=this.card(c);return printed.supertype==='Trainer'&&printed.subtypes?.includes('Supporter')&&printed.name.includes("Team Rocket's");}
     playBasic(uid,options={}){if(!this.canAct())return this.fail('Bukan giliranmu.');const p=this.me,c=this.handCard(p,uid);if(!c||!this.isBasic(c))return this.fail('Pilih Pokémon Basic.');if(p.bench.length>=5)return this.fail('Bench penuh.');p.bench.push(this.unit(this.takeHand(p,uid),p.turns));this.print(this.name(c)+' masuk Bench.');this.recordAction(p,'card',this.name(c),'Masuk ke Bench',{cardId:c.id,subtype:'Basic'});if(c.id==='me3-62'&&!options.skipAbility)this.lastDitchCatch(p,options.supporterUid);return this.ok();}
     lastDitchCatch(p,supporterUid){if(p.abilityFlags.lastDitch===p.turns||p.abilityFlags['global_ability_Last-Ditch Catch']===p.turns)return false;const choices=p.deck.filter(x=>typeOf(this.card(x))==='supporter');const c=choices.find(x=>x.uid===supporterUid)||choices[0];if(!c)return false;p.deck.splice(p.deck.indexOf(c),1);p.hand.push(c);shuffle(p.deck,this.random);p.abilityFlags.lastDitch=p.turns;p.abilityFlags['global_ability_Last-Ditch Catch']=p.turns;this.print('Last-Ditch Catch: Meowth ex memperlihatkan '+this.name(c)+' dan memasukkannya ke tangan.');this.recordAction(p,'skill','Last-Ditch Catch (Meowth ex)','Mengambil '+this.name(c)+' dari dek',{abilityName:'Last-Ditch Catch',cardId:'me3-62'});return true;}
@@ -787,16 +792,36 @@
         this.recordAction(p,'card',this.name(item),'Mencari '+this.name(target),{cardId:item.id,subtype:'Item'});
       }
 
+      // 3.5 Play Stadium (Forest of Vitality, Team Rocket's Factory, Battle Cage)
+      if(!p.stadiumUsed){
+        const stadCard=p.hand.find(c=>typeOf(this.card(c))==='stadium');
+        if(stadCard&&this.stadium?.id!==stadCard.id){
+          p.stadiumUsed=true;
+          const played=this.takeHand(p,stadCard.uid);
+          const old=this.stadium;
+          if(old)old.owner.discard.push(old.card);
+          this.stadium={id:stadCard.id,card:played,owner:p};
+          this.print('CPU memainkan Stadium '+this.name(played)+'.');
+          this.recordAction(p,'card',this.name(played),'Dimainkan (Stadium)',{cardId:stadCard.id,subtype:'Stadium'});
+          this.checkAllKO();
+        }
+      }
+
       // 4. Evolve
-      for(const c of [...p.hand]){
-        const card=this.card(c);
-        if(!card.evolvesFrom)continue;
-        const u=this.allRefs(p).map(x=>x.unit).find(x=>this.canEvolve(p,card,x));
-        if(u){
-          u.stack.push(this.takeHand(p,c.uid));
-          u.evolvedTurn=p.turns;u.poisoned=false;u.paralyzed=false;
-          this.print('CPU mengevolusikan '+card.name+'.');
-          this.recordAction(p,'card',card.name,'Evolusi',{cardId:c.id,subtype:'Evolution'});
+      let evolvedAny=true,evoRounds=0;
+      while(evolvedAny&&evoRounds<3){
+        evolvedAny=false;evoRounds++;
+        for(const c of [...p.hand]){
+          const card=this.card(c);
+          if(!card.evolvesFrom)continue;
+          const u=this.allRefs(p).map(x=>x.unit).find(x=>this.canEvolve(p,card,x));
+          if(u){
+            u.stack.push(this.takeHand(p,c.uid));
+            u.evolvedTurn=p.turns;u.poisoned=false;u.paralyzed=false;
+            this.print('CPU mengevolusikan '+card.name+'.');
+            this.recordAction(p,'card',card.name,'Evolusi',{cardId:c.id,subtype:'Evolution'});
+            evolvedAny=true;
+          }
         }
       }
 

@@ -45,10 +45,11 @@ CARD_SPECS = [
     {"id": "sv8pt5-4", "name": "Budew", "type": "Grass", "stage": "Basic", "hp": "30", "attacks": [("Itchy Pollen", "10 (Opponent can't play Items)")], "bg": (22, 101, 52), "accent": (134, 239, 172)},
     {"id": "sv5-152", "name": "Hero's Cape", "type": "Colorless", "kind": "Tool", "stage": "ACE SPEC", "hp": "+100", "ability": "Tool: Pokémon gets +100 HP", "bg": (153, 27, 27), "accent": (248, 113, 113)},
 
-    # Meganium Evolution Line (Mega Evolution - Mark I)
+    # Meganium Evolution Line & Stadium (Mega Evolution - Mark I)
     {"id": "me1-8", "name": "Chikorita", "type": "Grass", "stage": "Basic", "hp": "70", "attacks": [("Razor Leaf", "20")], "bg": (22, 101, 52), "accent": (134, 239, 172), "regulation": "I"},
     {"id": "me1-9", "name": "Bayleef", "type": "Grass", "stage": "Stage 1", "hp": "110", "attacks": [("Push Down", "50 (Switch opponent active)")], "bg": (20, 83, 45), "accent": (74, 222, 128), "regulation": "I"},
-    {"id": "me1-10", "name": "Meganium", "type": "Grass", "stage": "Stage 2", "hp": "160", "ability": "Wild Growth: Basic Grass Energy = 2 Grass", "attacks": [("Solar Beam", "140")], "bg": (15, 65, 35), "accent": (34, 197, 94), "regulation": "I"}
+    {"id": "me1-10", "name": "Meganium", "type": "Grass", "stage": "Stage 2", "hp": "160", "ability": "Wild Growth: Basic Grass Energy = 2 Grass", "attacks": [("Solar Beam", "140")], "bg": (15, 65, 35), "accent": (34, 197, 94), "regulation": "I"},
+    {"id": "me1-117", "name": "Forest of Vitality", "type": "Grass", "stage": "Stadium", "ability": "Hutan Vitalis: Grass Pokémon can evolve immediately", "attacks": [("Instant Evolution", "Evolusi Pokemon Daun di giliran dimainkan")], "bg": (20, 83, 45), "accent": (74, 222, 128), "regulation": "I"}
 ]
 
 def render_card(spec):
