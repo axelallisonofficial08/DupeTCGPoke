@@ -127,15 +127,32 @@
 .deck-column-title{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800;color:#94a3b8;letter-spacing:.06em}
 .deck-active-tag{background:#0284c7;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px}
 .deck-picker-list{display:flex;flex-direction:column;gap:8px}
-.deck-card-option{cursor:pointer;display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center;padding:8px 10px;border:1px solid #28415a;border-radius:9px;background:#17293d;transition:border-color .15s,background .15s,transform .15s;text-align:left}
-.deck-card-option:hover{border-color:#38bdf8;background:#203853;transform:translateY(-1px)}
+.deck-card-option{cursor:pointer;display:flex;flex-direction:column;padding:8px 10px;border:1px solid #28415a;border-radius:9px;background:#17293d;transition:border-color .15s,background .15s,transform .15s;text-align:left;gap:6px}
+.deck-card-option:hover{border-color:#38bdf8;background:#203853}
 .deck-card-option.selected{border-color:#38bdf8;background:linear-gradient(135deg,#1e3e63,#112a45);box-shadow:0 0 0 2px #0ea5e9}
 .deck-card-option.selected .deck-card-name{color:#fde047}
+
+.deck-option-main{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;width:100%}
 .deck-thumb{width:44px;height:61px;object-fit:cover;border-radius:4px;border:1px solid #3d5873;background:#0d1824}
 .deck-card-meta{display:flex;flex-direction:column;gap:3px;min-width:0}
 .deck-card-name{font-weight:800;font-size:13px;color:#f8fafc;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .deck-card-types{font-size:10px;font-weight:700;color:#38bdf8;letter-spacing:.02em}
 .deck-card-desc{font-size:11px;color:#94a3b8;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+.deck-expand-btn{background:#0e2942;color:#38bdf8;border:1px solid #0284c7;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .15s;white-space:nowrap}
+.deck-expand-btn:hover{background:#0284c7;color:#fff}
+.deck-expand-btn.expanded{background:#0369a1;color:#fff;border-color:#38bdf8}
+
+.deck-cardlist-drawer{background:#0b1420;border:1px solid #1e3a58;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:10px}
+.deck-cardlist-drawer[hidden]{display:none}
+.drawer-section{display:flex;flex-direction:column}
+.drawer-section-title{font-size:11px;font-weight:800;color:#94a3b8;letter-spacing:.05em;display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.drawer-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
+.drawer-card-item{display:flex;flex-direction:column;align-items:center;background:#132233;border:1px solid #233b54;border-radius:6px;padding:4px;cursor:pointer;position:relative;transition:transform .15s,border-color .15s}
+.drawer-card-item:hover{transform:scale(1.06);border-color:#38bdf8;z-index:2;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
+.drawer-card-img{width:100%;height:auto;aspect-ratio:245/342;object-fit:cover;border-radius:4px}
+.drawer-card-qty{position:absolute;top:2px;right:2px;background:#e11d48;color:#fff;font-size:9px;font-weight:900;padding:1px 4px;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.6)}
+.drawer-card-name{font-size:9px;color:#cbd5e1;text-align:center;line-height:1.2;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%}
 
 .deck-modal-matchup-summary{background:#121e2d;border:1px solid #28415a;border-radius:8px;padding:8px 12px;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;color:#94a3b8}
 .deck-modal-matchup-summary strong{color:#38bdf8}
@@ -184,9 +201,11 @@
   #deckColumnsContainer.show-player #colCpu{display:none}
   #deckColumnsContainer.show-player #colPlayer{display:flex}
   #deckColumnsContainer.show-cpu #colPlayer{display:none}
-  #deckColumnsContainer.show-cpu #colCpu{display:flex}
-  .deck-card-option{grid-template-columns:38px 1fr;padding:6px 8px;gap:8px}
+  .deck-card-option{padding:6px 8px;gap:6px}
+  .deck-option-main{grid-template-columns:38px 1fr auto;gap:8px}
   .deck-thumb{width:38px;height:53px}
+  .deck-expand-btn{padding:4px 6px;font-size:10px}
+  .drawer-cards-grid{grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:5px}
   .deck-card-desc{font-size:10px}
   .card-detail-layout{grid-template-columns:1fr;gap:10px}
   .card-detail-visual{display:flex;justify-content:center}

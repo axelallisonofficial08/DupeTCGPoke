@@ -54,10 +54,11 @@
       'sve-8':19
     },
     zoroark:{
-      'sv10-141':4,'sv10-142':4,'sv6pt5-38':1,'me3-62':1,
-      'me1-131':4,'me2pt5-198':4,'me1-125':2,'me2pt5-196':2,'me1-130':3,
-      'zsv10pt5-79':2,'sv8-185':1,'me1-119':4,'me1-114':4,'me3-76':3,
-      'sve-7':21
+      'sv9-97':4,'sv9-98':4,'sv9-116':2,'sv6pt5-38':1,'me3-62':1,
+      'me1-131':4,'me2pt5-198':4,'me2pt5-196':2,'me1-130':3,
+      'zsv10pt5-79':2,'sv8-185':1,'sv9-152':2,'me1-119':4,'me1-114':4,'me3-76':3,
+      'me4-108':2,
+      'sve-7':17
     },
     grimmsnarl:{
       'sv10-128':4,'sv10-129':4,'sv10-130':4,'sv6pt5-38':1,'me3-62':1,
@@ -135,10 +136,10 @@
     zoroark:{
       id:'zoroark',
       name:"N's Zoroark ex",
-      types:['Darkness'],
+      types:['Darkness','Dragon'],
       icon:'🦊',
-      preferredActive:'sv10-141',
-      description:'Trade membuang kartu untuk draw 2 kartu, Doom Crush 180 damage sekaligus membuang Energy lawan.'
+      preferredActive:'sv9-97',
+      description:'Trade membuang 1 kartu untuk draw 2 kartu, Night Joker menyalin serangan N\'s Reshiram (Virtuous Flame 170 damage).'
     },
     grimmsnarl:{
       id:'grimmsnarl',

@@ -1122,6 +1122,9 @@
       opt.role = 'radio';
       opt.setAttribute('aria-checked', key === activeDeckKey ? 'true' : 'false');
 
+      const mainRow = document.createElement('div');
+      mainRow.className = 'deck-option-main';
+
       const thumb = document.createElement('img');
       thumb.className = 'deck-thumb';
       thumb.src = 'assets/cards/' + (deck.preferredActive || 'me2pt5-126') + '.png';
@@ -1144,7 +1147,90 @@
       desc.textContent = deck.description || '';
 
       meta.append(title, types, desc);
-      opt.append(thumb, meta);
+
+      const expandBtn = document.createElement('button');
+      expandBtn.type = 'button';
+      expandBtn.className = 'deck-expand-btn';
+      expandBtn.innerHTML = '👁️ <span>Lihat Kartu</span>';
+      expandBtn.title = 'Buka daftar 60 kartu fisik ' + deck.name;
+
+      mainRow.append(thumb, meta, expandBtn);
+
+      // Card list drawer
+      const drawer = document.createElement('div');
+      drawer.className = 'deck-cardlist-drawer';
+      drawer.hidden = true;
+
+      // Group cards for this deck
+      const deckCards = PTCGEngine.DECKS[key] || {};
+      const pkmnList = [], trainerList = [], energyList = [];
+      for(const [cId, qty] of Object.entries(deckCards)){
+        const cardObj = game.cards[cId];
+        if(!cardObj) continue;
+        const itemData = { id: cId, card: cardObj, qty };
+        if(cardObj.supertype === 'Pokémon') pkmnList.push(itemData);
+        else if(cardObj.supertype === 'Energy') energyList.push(itemData);
+        else trainerList.push(itemData);
+      }
+
+      function renderDrawerCategory(catTitle, list){
+        if(!list.length) return null;
+        const sec = document.createElement('div');
+        sec.className = 'drawer-section';
+        const titleEl = document.createElement('div');
+        titleEl.className = 'drawer-section-title';
+        const total = list.reduce((a, b) => a + b.qty, 0);
+        titleEl.textContent = catTitle + ' (' + total + ')';
+        const grid = document.createElement('div');
+        grid.className = 'drawer-cards-grid';
+
+        list.forEach(({id, card, qty}) => {
+          const itemEl = document.createElement('div');
+          itemEl.className = 'drawer-card-item';
+          itemEl.title = card.name + ' (' + qty + 'x) — Klik untuk melihat detail & skill!';
+
+          const cardImg = document.createElement('img');
+          cardImg.className = 'drawer-card-img';
+          cardImg.src = 'assets/cards/' + id + '.png';
+          cardImg.alt = card.name;
+          cardImg.loading = 'lazy';
+
+          const qtyBadge = document.createElement('span');
+          qtyBadge.className = 'drawer-card-qty';
+          qtyBadge.textContent = qty + 'x';
+
+          const nameEl = document.createElement('span');
+          nameEl.className = 'drawer-card-name';
+          nameEl.textContent = card.name;
+
+          itemEl.append(cardImg, qtyBadge, nameEl);
+          itemEl.onclick = e => {
+            e.stopPropagation();
+            showCardDetailsById(id);
+          };
+          grid.append(itemEl);
+        });
+
+        sec.append(titleEl, grid);
+        return sec;
+      }
+
+      const pSec = renderDrawerCategory('🃏 Pokémon', pkmnList);
+      if(pSec) drawer.append(pSec);
+      const tSec = renderDrawerCategory('🎒 Trainer', trainerList);
+      if(tSec) drawer.append(tSec);
+      const eSec = renderDrawerCategory('⚡ Energy', energyList);
+      if(eSec) drawer.append(eSec);
+
+      expandBtn.onclick = e => {
+        e.stopPropagation();
+        const isHidden = drawer.hidden;
+        drawer.hidden = !isHidden;
+        expandBtn.classList.toggle('expanded', isHidden);
+        expandBtn.innerHTML = isHidden ? '▲ <span>Tutup</span>' : '👁️ <span>Lihat Kartu</span>';
+      };
+
+      opt.append(mainRow, drawer);
 
       opt.onclick = () => onSelect(key);
       opt.onkeydown = e => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(key); } };
