@@ -126,6 +126,16 @@
       actBtn.onclick=e=>{e.stopPropagation();apply(game.useStadium());};
       info.append(actBtn);
     }
+    if(printed.id==='scr-136'){
+      const canUse=game.canUseStadium(game.me);
+      const actBtn=document.createElement('button');
+      actBtn.type='button';
+      actBtn.className='stadium-ability-btn';
+      actBtn.textContent=canUse?'🌳 Gunakan Grand Tree (Evolusi Bertahap)':'Grand Tree Belum Siap';
+      actBtn.disabled=!canUse;
+      actBtn.onclick=e=>{e.stopPropagation();apply(game.useStadium());};
+      info.append(actBtn);
+    }
     root.append(button,info);
   }
   async function openStadiumMenu(){
@@ -136,6 +146,14 @@
       const canUse=game.canUseStadium(game.me);
       options.push({
         label:'⚡ Gunakan Ability Stadium: Ambil 2 kartu',
+        value:'use',
+        disabled:!canUse
+      });
+    }
+    if(printed.id==='scr-136'){
+      const canUse=game.canUseStadium(game.me);
+      options.push({
+        label:'🌳 Gunakan Grand Tree: Cari dan pasang kartu evolusi bertahap',
         value:'use',
         disabled:!canUse
       });
